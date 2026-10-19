@@ -144,7 +144,11 @@ https://official-zxkts.github.io/QR-Studio-Scanner-Authenticator/PRIVACY.html
 | Screenshot 3 | `store/screenshots/create.png` | 1280×800 PNG |
 | Screenshot 4 | `store/screenshots/history.png` | 1280×800 PNG |
 | Small promo tile | `store/promo-440x280.png` | 440×280 PNG |
-| Large promo tile | `store/promo-tile-440x280.png` | optional, 440×280 |
+| Large promo tile | `store/promo-tile-920x280.png` | 920×280 PNG |
+
+The extension package itself is `dist/qr-studio-2.0.0.zip`, built by
+`scripts/package-extension.ps1` (Windows) or `scripts/package-extension.sh`
+(macOS/Linux). Upload that zip — not the repository folder.
 
 ## Release notes for v2.0.0
 *Limit: 16,000 characters — also used as the "What's new" text*

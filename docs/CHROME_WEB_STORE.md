@@ -67,6 +67,8 @@ Fill in the listing using [`../store/STORE_LISTING.md`](../store/STORE_LISTING.m
 | Icon | `store/icon-128.png` (128×128 PNG) |
 | Screenshots | `store/screenshots/*.png` (1280×800) |
 | Small promo tile | `store/promo-440x280.png` (440×280) |
+| Large promo tile | `store/promo-tile-920x280.png` (920×280) |
+| Extension package | `dist/qr-studio-<version>.zip` — build it with `scripts/package-extension.ps1` / `.sh` |
 | Privacy policy | Public URL of `docs/PRIVACY.md` in this repository |
 
 **Privacy practices declaration** — answer as follows:
