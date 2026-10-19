@@ -211,8 +211,18 @@ they verify the manifest parses before zipping.
 validates `manifest.json`, checks that every file referenced by the manifest
 exists, confirms the local-only promise still holds (no host permissions, no
 content scripts, no remote CSP sources), verifies the vendored libraries still
-carry their licence headers, and builds the distributable zip as a downloadable
-artifact.
+carry their licence headers, round-trips a QR code through both vendored
+libraries, and builds the distributable zip as a downloadable artifact.
+
+### Run the library check locally
+
+```bash
+node scripts/verify-libraries.js
+```
+
+It encodes a string with the bundled `qrcode-generator`, rasterises the matrix
+and decodes it again with the bundled `jsQR` build, so a broken or truncated
+vendor file fails fast instead of silently breaking scanning.
 
 ### Requirements for local testing
 

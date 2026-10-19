@@ -85,6 +85,9 @@ jobs:
           test -f THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md is missing"; exit 1; }
           echo "third-party notices OK"
 
+      - name: Round-trip the vendored libraries
+        run: node scripts/verify-libraries.js
+
       - name: Build store-ready zip
         run: bash ./scripts/package-extension.sh
 

@@ -32,6 +32,9 @@ Nothing yet.
   mark in the popup header.
 - Apache-2.0 attribution header on the bundled jsQR build, so the shipped
   archive documents its own licence.
+- `scripts/verify-libraries.js` — a dependency-free smoke test that encodes a
+  QR code with the bundled generator and decodes it again with the bundled
+  decoder.
 
 ### Changed
 
