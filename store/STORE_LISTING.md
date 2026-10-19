@@ -113,16 +113,19 @@ https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator
 
 ## Privacy policy URL
 
-Point this at a **public** copy of `docs/PRIVACY.md` — for example:
+Point this at a **public** copy of the privacy policy. The repository ships
+`docs/index.html`, which is published by GitHub Pages once you enable
+**Settings → Pages → Deploy from a branch → `main` / `/docs`**:
+
+```
+https://official-zxkts.github.io/QR-Studio-Scanner-Authenticator/
+```
+
+If you have not enabled Pages yet, use the copy in the repository instead —
+open it in a private window to confirm it loads without signing in:
 
 ```
 https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/blob/main/docs/PRIVACY.md
-```
-
-or a GitHub Pages URL if you enable Pages for the repository:
-
-```
-https://official-zxkts.github.io/QR-Studio-Scanner-Authenticator/PRIVACY.html
 ```
 
 ## Privacy practices declaration

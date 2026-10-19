@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy Policy — QR Studio</title>
+    <meta name="description" content="QR Studio does not collect, transmit, sell or share any data. Everything stays on your device.">
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #f4f7ff;
+        --muted: #9ca9c5;
+        --faint: #6c7895;
+        --line: rgba(169, 185, 228, .15);
+        --page: #080d1d;
+        --panel: #121a33;
+        --blue: #45beff;
+        --violet: #9b7bff;
+        --mint: #63e2b0;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 48px 20px 80px;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse 70% 28% at 91% -4%, rgba(100, 89, 244, .38), transparent 72%),
+          radial-gradient(ellipse 50% 27% at -10% 47%, rgba(35, 157, 220, .14), transparent 70%),
+          var(--page);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.62;
+      }
+      main { max-width: 820px; margin: 0 auto; }
+      header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+      .mark {
+        position: relative;
+        width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px;
+        background: linear-gradient(135deg, var(--blue), var(--violet));
+        box-shadow: 0 8px 20px rgba(76, 134, 255, .22);
+      }
+      .mark::before, .mark::after {
+        position: absolute; display: block; content: ""; background: #0a1130;
+      }
+      .mark::before { width: 9px; height: 9px; top: 7px; left: 7px; box-shadow: 12px 0 #0a1130, 0 12px #0a1130; }
+      .mark::after { width: 4px; height: 4px; right: 7px; bottom: 7px; box-shadow: -6px 0 #0a1130, 0 -6px #0a1130; }
+      .eyebrow { margin: 0 0 2px; color: var(--blue); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+      h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: -.03em; }
+      .meta { margin: 0 0 34px; color: var(--faint); font-size: 13px; }
+      h2 {
+        margin: 40px 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line);
+        font-size: 19px; letter-spacing: -.02em;
+      }
+      p, li { color: var(--muted); font-size: 15px; }
+      strong { color: var(--ink); }
+      ul, ol { padding-left: 22px; }
+      li { margin-bottom: 7px; }
+      .summary {
+        margin: 0 0 30px; padding: 18px 20px; border: 1px solid rgba(99, 226, 176, .26);
+        border-radius: 14px; background: rgba(99, 226, 176, .07);
+      }
+      .summary p { margin: 0; color: #dff6ec; font-size: 16px; }
+      table { width: 100%; margin: 14px 0 8px; border-collapse: collapse; font-size: 14px; }
+      th, td { padding: 10px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+      th { color: var(--ink); background: rgba(18, 26, 51, .85); font-size: 13px; }
+      td { color: var(--muted); }
+      code {
+        padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px;
+        color: #d1c1ff; background: rgba(4, 9, 24, .5);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px;
+      }
+      .card {
+        margin: 26px 0 0; padding: 18px 20px; border: 1px solid var(--line);
+        border-radius: 14px; background: rgba(18, 26, 51, .8);
+      }
+      .card h2 { margin-top: 0; border: 0; padding-bottom: 0; }
+      .card p:last-child { margin-bottom: 0; }
+      a { color: var(--blue); }
+      .foot { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+      .foot a { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <p class="eyebrow">LOCAL-ONLY TOOLKIT</p>
+          <h1>Privacy Policy — QR Studio</h1>
+        </div>
+      </header>
+      <p class="meta">
+        Last updated: 20 October 2026 &middot;
+        Applies to QR Studio — Scanner &amp; Authenticator (Chrome extension), version 2.0.0
+      </p>
+
+      <div class="summary">
+        <p><strong>QR Studio does not collect, transmit, sell or share any data.</strong>
+        The extension makes no network requests at all. Everything you scan, create or store
+        stays on your device, inside your own Chrome profile.</p>
+      </div>
+
+      <h2>What the extension does not do</h2>
+      <ul>
+        <li>It does not send QR code contents to any server.</li>
+        <li>It does not include analytics, telemetry, crash reporting, A/B testing or advertising.</li>
+        <li>It does not use a remote configuration or update-ping service.</li>
+        <li>It does not load any remote scripts, fonts, stylesheets or images.</li>
+        <li>It does not read, modify or transmit the content of web pages.</li>
+        <li>It does not require an account, and there is nothing to sign up for.</li>
+        <li>It does not use advertising or tracking identifiers.</li>
+      </ul>
+      <p>The only network permission in the extension's manifest is <code>activeTab</code>, which
+      Chrome grants on demand. It is used in exactly two ways, both triggered by an explicit click
+      you make:</p>
+      <ol>
+        <li>capturing the <strong>visible tab</strong> as an image when you choose the <em>Tab</em>
+        scan source, so the QR code on screen can be decoded;</li>
+        <li>opening a result link or the full-screen camera page in a new tab.</li>
+      </ol>
+
+      <h2>What is stored locally</h2>
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Storage location</th><th>When it is stored</th><th>When it is deleted</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vault accounts (issuer, account name, OTP secret, algorithm, digits, period, counter, favourite flag)</td>
+            <td><code>chrome.storage.local</code></td>
+            <td>Only when you explicitly save an account</td>
+            <td>When you delete the account, or uninstall the extension</td>
+          </tr>
+          <tr>
+            <td>Generated OTP codes</td>
+            <td>Computed in memory only</td>
+            <td>Never written to disk</td>
+            <td>Immediately when the vault reloads or the popup closes</td>
+          </tr>
+          <tr>
+            <td>General scan history</td>
+            <td><code>chrome.storage.local</code></td>
+            <td>Only if you enable &ldquo;Save general QR scans on this device&rdquo; — <strong>off by default</strong></td>
+            <td>When you clear the history, or uninstall the extension</td>
+          </tr>
+          <tr>
+            <td>User settings (scan intent, source preference, history toggle)</td>
+            <td><code>chrome.storage.local</code></td>
+            <td>When you change them</td>
+            <td>When you uninstall the extension</td>
+          </tr>
+          <tr>
+            <td>Encrypted vault backups</td>
+            <td>A file you choose on your disk</td>
+            <td>Only when you click <strong>Backup</strong></td>
+            <td>Only by you — the extension never writes backup files on its own</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>Authenticator setup secrets are never written to scan history.</strong> A QR code
+      identified as an authenticator setup code is redacted from the result, is never copied to the
+      clipboard automatically, and must be explicitly saved by you.</p>
+
+      <h2>How the data is protected</h2>
+      <ul>
+        <li>Vault secrets are stored in <code>chrome.storage.local</code>, inside your Chrome profile.
+        This storage is <strong>not encrypted by the extension</strong> — it inherits the protection of
+        your operating system account and your Chrome profile encryption. Anyone with access to your
+        unlocked profile can read it.</li>
+        <li>When you export a backup, the file is encrypted locally before it is written to disk:
+        key derivation is <strong>PBKDF2</strong>, SHA-256, <strong>210,000 iterations</strong>, with a
+        random 16-byte salt; encryption is <strong>AES-GCM</strong> with a 256-bit key and a random
+        12-byte IV; the format identifier is <code>qr-studio-encrypted-v1</code>.</li>
+        <li><strong>QR Studio never stores, logs or transmits your backup password.</strong> If you lose
+        it, the backup cannot be recovered.</li>
+        <li>Restoring a backup decrypts it locally in the extension; the plaintext never leaves your
+        device.</li>
+      </ul>
+
+      <h2>Third-party code</h2>
+      <p>The extension bundles two open-source libraries that run entirely inside the browser:
+      <strong>jsQR</strong> (Apache-2.0) for offline QR decoding and
+      <strong>QR Code generator for JavaScript</strong> (MIT) for local QR creation. Neither of them
+      performs network requests. See
+      <a href="https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
+
+      <h2>Children</h2>
+      <p>QR Studio does not knowingly collect any personal information from anyone, including
+      children under 13, because it does not collect any information at all.</p>
+
+      <h2>Changes to this policy</h2>
+      <p>If this policy changes, the updated version will be committed to the repository with a new
+      &ldquo;Last updated&rdquo; date, and the Chrome Web Store listing will point to the same page.</p>
+
+      <div class="card">
+        <h2>Contact</h2>
+        <p>Questions about this policy or the extension can be raised as an issue on GitHub:
+        <a href="https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/issues">github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/issues</a></p>
+      </div>
+
+      <p class="foot">
+        QR Studio is open source under the MIT License. Source code:
+        <a href="https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator">github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator</a>
+      </p>
+    </main>
+  </body>
+</html>

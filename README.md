@@ -182,8 +182,8 @@ Extension/
 ├── jsqr.js                # vendored: jsQR 1.4.0 (Apache-2.0)
 ├── qrcode-generator.js    # vendored: qrcode-generator 1.4.4 (MIT)
 ├── assets/                # logo used by the README
-├── docs/                  # privacy policy + store submission guide
-├── scripts/               # packaging helpers
+├── docs/                  # privacy policy (Markdown + standalone page) + store guide
+├── scripts/               # packaging helpers and the library smoke test
 ├── store/                 # Chrome Web Store assets + listing copy
 └── .github/               # CI workflow and issue templates
 ```
