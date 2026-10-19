@@ -1,0 +1,72 @@
+name: Build extension
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate and package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate manifest.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const raw = fs.readFileSync('manifest.json', 'utf8');
+            const m = JSON.parse(raw);
+            if (m.manifest_version !== 3) throw new Error('expected manifest_version 3');
+            if (!m.version) throw new Error('missing version');
+            if (!/^\d+(\.\d+){0,3}$/.test(m.version)) throw new Error('version must be numeric');
+            console.log('manifest_version', m.manifest_version, '| version', m.version, '| name', m.name);
+          "
+
+      - name: Verify manifest-referenced files exist
+        run: |
+          node -e "
+            const fs = require('fs');
+            const m = require('./manifest.json');
+            const refs = [
+              m.action && m.action.default_popup,
+              ...Object.values(m.icons || {}),
+              ...Object.values((m.action && m.action.default_icon) || {})
+            ].filter(Boolean);
+            const missing = refs.filter((r) => !fs.existsSync(r));
+            if (missing.length) {
+              console.error('missing referenced file(s):', missing);
+              process.exit(1);
+            }
+            console.log('all ' + refs.length + ' referenced file(s) present');
+          "
+
+      - name: Check vendored libraries keep their licence headers
+        run: |
+          head -5 jsqr.js | grep -qi "license" || { echo "jsqr.js is missing its licence header"; exit 1; }
+          head -5 qrcode-generator.js | grep -qi "license" || { echo "qrcode-generator.js is missing its licence header"; exit 1; }
+          test -f THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md is missing"; exit 1; }
+          echo "third-party notices OK"
+
+      - name: Build store-ready zip
+        run: ./scripts/package-extension.sh
+
+      - name: Verify zip root contains manifest.json
+        run: |
+          unzip -l dist/qr-studio-*.zip | grep -q " manifest.json" || {
+            echo "manifest.json must sit at the root of the zip"; exit 1; }
+          unzip -l dist/qr-studio-*.zip
+
+      - name: Upload the packaged extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: qr-studio-extension
+          path: dist/*.zip
+          if-no-files-found: error

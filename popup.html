@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QR Studio</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="brand-copy">
+          <p class="eyebrow">LOCAL-ONLY TOOLKIT</p>
+          <h1>QR Studio</h1>
+        </div>
+        <span class="local-badge" title="No QR content is uploaded">Local</span>
+      </header>
+
+      <nav class="main-tabs" aria-label="QR Studio sections" role="tablist">
+        <button class="main-tab active" type="button" role="tab" aria-selected="true" data-view="scan"><span>⌁</span> Scan</button>
+        <button class="main-tab" type="button" role="tab" aria-selected="false" data-view="vault"><span>◈</span> Vault</button>
+        <button class="main-tab" type="button" role="tab" aria-selected="false" data-view="create"><span>＋</span> Create</button>
+        <button class="main-tab" type="button" role="tab" aria-selected="false" data-view="history"><span>◷</span> History</button>
+      </nav>
+
+      <section class="view-panel active" data-panel="scan" role="tabpanel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SCAN A QR CODE</p>
+            <h2>What are you scanning?</h2>
+          </div>
+          <span class="status-dot" id="scannerStatus">Ready</span>
+        </div>
+
+        <div class="intent-toggle" role="group" aria-label="QR purpose">
+          <button class="intent-button active" type="button" data-intent="general">
+            <b>General QR</b><small>Links, text, Wi‑Fi, numbers</small>
+          </button>
+          <button class="intent-button" type="button" data-intent="auth">
+            <b>Authenticator</b><small>Import a 2FA setup QR</small>
+          </button>
+        </div>
+
+        <section class="scanner-card" aria-label="QR scanner">
+          <div class="source-tabs" role="tablist" aria-label="Scan source">
+            <button class="source-tab active" type="button" data-source="camera" role="tab" aria-selected="true">▣ Camera</button>
+            <button class="source-tab" type="button" data-source="image" role="tab" aria-selected="false">▧ Image</button>
+            <button class="source-tab" type="button" data-source="tab" role="tab" aria-selected="false">▤ Tab</button>
+            <button class="source-tab" type="button" data-source="paste" role="tab" aria-selected="false">⌘ Paste</button>
+          </div>
+
+          <div class="camera-picker" id="cameraPicker" hidden>
+            <label for="cameraSelect">Camera</label>
+            <select id="cameraSelect" aria-label="Choose camera"></select>
+            <button class="icon-button" id="refreshCameras" type="button" title="Refresh cameras">↻</button>
+          </div>
+
+          <div class="scanner-stage" id="scannerStage">
+            <video id="camera" autoplay muted playsinline hidden></video>
+            <canvas id="scanCanvas" hidden></canvas>
+            <canvas id="processCanvas" hidden></canvas>
+            <div class="stage-empty" id="stageEmpty">
+              <span class="scan-frame" aria-hidden="true"><i></i></span>
+              <strong id="stageTitle">Camera scanner ready</strong>
+              <small id="stageHint">Start the camera and place a QR code inside the frame.</small>
+            </div>
+            <div class="paste-panel" id="pastePanel" hidden>
+              <label for="pasteInput">Paste QR contents or an <code>otpauth://</code> setup URI</label>
+              <textarea id="pasteInput" rows="4" placeholder="https://example.com, a message, or otpauth://totp/…"></textarea>
+              <button class="secondary-button" id="decodePaste" type="button">Decode pasted content</button>
+            </div>
+          </div>
+
+          <div class="scan-controls">
+            <button class="primary-button" id="sourceAction" type="button">Start camera</button>
+            <button class="quiet-button" id="stopCamera" type="button" hidden>Stop</button>
+            <button class="quiet-button full-camera-button" id="openFullCamera" type="button" title="Open a camera scanner in its own tab">⤢</button>
+            <input id="imageInput" type="file" accept="image/*" hidden>
+          </div>
+          <p class="drop-hint" id="dropHint">You can also drag an image here or paste one with Ctrl + V.</p>
+        </section>
+
+        <section class="result-card" id="resultCard" aria-live="polite">
+          <div class="result-heading">
+            <span class="result-type-chip" id="resultType">READY</span>
+            <p id="resultLabel">Ready to scan</p>
+          </div>
+          <p class="result-description" id="resultDescription">This scanner reads the exact QR content—words, numbers, website links, setup codes, and more.</p>
+          <pre class="result-value" id="resultValue">Nothing scanned yet.</pre>
+          <div class="result-actions" id="resultActions" hidden></div>
+        </section>
+      </section>
+
+      <section class="view-panel" data-panel="vault" role="tabpanel" hidden>
+        <div class="section-heading vault-heading">
+          <div>
+            <p class="eyebrow">OFFLINE AUTHENTICATOR</p>
+            <h2>Your code vault</h2>
+          </div>
+          <span class="vault-count" id="vaultCount">0</span>
+        </div>
+        <p class="security-note">Secrets stay in this local Chrome profile. Protect your profile; use encrypted backup for recovery.</p>
+
+        <div class="vault-toolbar">
+          <button class="primary-button compact" id="scanAuthenticator" type="button">Scan setup QR</button>
+          <button class="secondary-button compact" id="showManualForm" type="button">Add manually</button>
+          <button class="quiet-button compact" id="exportVault" type="button">Backup</button>
+          <button class="quiet-button compact" id="importVault" type="button">Restore</button>
+          <input id="importInput" type="file" accept="application/json,.json" hidden>
+        </div>
+
+        <form class="manual-form" id="manualForm" hidden>
+          <div class="form-heading"><b>Manual authenticator</b><button type="button" class="text-button" id="hideManualForm">Close</button></div>
+          <label>Paste setup URI <textarea id="manualUri" rows="2" placeholder="otpauth://totp/Example:me?secret=…"></textarea></label>
+          <button class="secondary-button full" id="parseManualUri" type="button">Fill from setup URI</button>
+          <div class="form-grid">
+            <label>Issuer <input id="manualIssuer" autocomplete="off" placeholder="Example"></label>
+            <label>Account name <input id="manualName" autocomplete="off" placeholder="me@example.com"></label>
+            <label class="wide">Base32 secret <input id="manualSecret" autocomplete="off" spellcheck="false" placeholder="JBSWY3DPEHPK3PXP"></label>
+            <label>Type <select id="manualType"><option value="totp">TOTP</option><option value="hotp">HOTP</option></select></label>
+            <label>Algorithm <select id="manualAlgorithm"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
+            <label>Digits <input id="manualDigits" inputmode="numeric" value="6"></label>
+            <label>Period (seconds) <input id="manualPeriod" inputmode="numeric" value="30"></label>
+            <label id="counterField" hidden>Counter <input id="manualCounter" inputmode="numeric" value="0"></label>
+          </div>
+          <p class="form-warning" id="manualWarning"></p>
+          <button class="primary-button full" id="saveManualAccount" type="button">Save authenticator</button>
+        </form>
+
+        <div class="vault-search-wrap">
+          <input id="vaultSearch" type="search" autocomplete="off" placeholder="Search authenticators">
+          <button class="text-button" id="clearVaultSearch" type="button" hidden>Clear</button>
+        </div>
+        <div class="accounts" id="accounts"></div>
+      </section>
+
+      <section class="view-panel" data-panel="create" role="tabpanel" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CREATE A QR CODE</p>
+            <h2>Make one locally</h2>
+          </div>
+        </div>
+        <label class="create-template-label" for="createTemplate">Template</label>
+        <select class="create-template" id="createTemplate">
+          <option value="text">Text or any data</option>
+          <option value="url">Website link</option>
+          <option value="wifi">Wi‑Fi connection</option>
+          <option value="email">Email message</option>
+          <option value="sms">SMS message</option>
+          <option value="phone">Phone number</option>
+          <option value="location">Map location</option>
+          <option value="contact">Contact card</option>
+        </select>
+        <div class="creator-fields" id="creatorFields"></div>
+        <button class="primary-button full create-button" id="generateQr" type="button">Generate QR code</button>
+        <section class="generated-card" id="generatedCard" hidden>
+          <canvas id="generatedCanvas" width="1" height="1"></canvas>
+          <div class="generated-copy">
+            <p class="eyebrow">ENCODED CONTENT</p>
+            <pre id="generatedPayload"></pre>
+          </div>
+          <div class="result-actions">
+            <button class="copy-button" id="copyGenerated" type="button">Copy content</button>
+            <button class="action-button" id="downloadGenerated" type="button">Download PNG</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="view-panel" data-panel="history" role="tabpanel" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PRIVATE SCAN HISTORY</p>
+            <h2>Your recent scans</h2>
+          </div>
+          <button class="text-button danger-text" id="clearHistory" type="button">Clear all</button>
+        </div>
+        <label class="history-toggle"><input type="checkbox" id="historyEnabled"><span></span> Save general QR scans on this device</label>
+        <p class="history-note">Authenticator setup secrets are never saved to scan history.</p>
+        <input class="history-search" id="historySearch" type="search" placeholder="Search saved scans">
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <p class="footer-note">No tracking. No cloud upload. QR processing happens locally in this extension.</p>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="jsqr.js"></script>
+    <script src="qrcode-generator.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

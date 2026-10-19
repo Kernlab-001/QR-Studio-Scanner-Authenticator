@@ -1,0 +1,57 @@
+name: Feature request
+description: Suggest a new capability for QR Studio
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the **problem** you are trying to solve rather than the
+        solution you have in mind — it usually leads to a better feature.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the workflow you need today and where it breaks down.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would the feature look like?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: offline
+    attributes:
+      label: Can this work with no network access at all?
+      description: QR Studio never makes network requests. Features that require a server will not be accepted.
+      options:
+        - "Yes - it can work entirely offline"
+        - "No - it needs a server"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does it belong to?
+      options:
+        - Scan
+        - Vault
+        - Create
+        - History
+        - Interface / layout
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Have you tried an alternative already?
+    validations:
+      required: false

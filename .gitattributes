@@ -1,0 +1,20 @@
+# Normalise text files to LF in the repository, check out as-is on Unix.
+* text=auto eol=lf
+
+# Shell scripts must stay LF so they run on macOS/Linux.
+*.sh text eol=lf
+
+# Batch/PowerShell scripts use CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets - never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.crx binary
+*.pem binary

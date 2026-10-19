@@ -1,0 +1,30 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# IDEs
+.idea/
+.vscode/
+*.code-workspace
+
+# Node (only used by optional tooling, not shipped with the extension)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Build output / release archives
+dist/
+build/
+release/
+*.zip
+*.crx
+*.pem
+
+# Local scratch
+tmp/
+scratch/
+.DS_Store

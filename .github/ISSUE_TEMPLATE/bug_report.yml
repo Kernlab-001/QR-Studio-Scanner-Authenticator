@@ -1,0 +1,97 @@
+name: Bug report
+description: Something in QR Studio does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. QR Studio never sends your data anywhere, so you can
+        paste QR contents freely — but please **redact authenticator secrets**
+        (`otpauth://` URIs, backup passwords, TOTP codes) before sharing them.
+
+  - type: input
+    id: version
+    attributes:
+      label: QR Studio version
+      description: Found in `manifest.json`, and in the extension's details page.
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: chrome-version
+    attributes:
+      label: Chrome version
+      placeholder: "131.0.6778.86"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tab
+    attributes:
+      label: Which tab?
+      options:
+        - Scan
+        - Vault
+        - Create
+        - History
+        - The popup itself (layout, sizing, styling)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source
+    attributes:
+      label: If it is the Scan tab, which source?
+      options:
+        - Not applicable
+        - Camera
+        - Image
+        - Tab
+        - Paste
+        - Clipboard image
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: Include the exact message shown in the extension, if any.
+    validations:
+      required: true
+
+  - type: textarea
+    id: payload
+    attributes:
+      label: The QR payload that triggered it (optional)
+      description: Redact any secrets.
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output (optional)
+      description: Right-click the popup → Inspect → Console → copy the errors.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues for this one.
+          required: true
+        - label: I am not sharing any unredacted secret.
+          required: false
