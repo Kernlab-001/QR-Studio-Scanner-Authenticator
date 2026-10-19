@@ -50,6 +50,7 @@ const ui = {
   cameraPicker: $('#cameraPicker'),
   cameraSelect: $('#cameraSelect'),
   scannerStatus: $('#scannerStatus'),
+  resultCard: $('#resultCard'),
   resultType: $('#resultType'),
   resultLabel: $('#resultLabel'),
   resultDescription: $('#resultDescription'),
@@ -78,6 +79,8 @@ const ui = {
   createTemplate: $('#createTemplate'),
   creatorFields: $('#creatorFields'),
   generatedCard: $('#generatedCard'),
+  createPlaceholder: $('#createPlaceholder'),
+  createPlaceholderText: $('#createPlaceholderText'),
   generatedCanvas: $('#generatedCanvas'),
   generatedPayload: $('#generatedPayload'),
   toast: $('#toast')
@@ -349,6 +352,8 @@ async function startCamera() {
     ui.camera.hidden = false;
     ui.scanCanvas.hidden = true;
     ui.stageEmpty.hidden = true;
+    ui.stage.classList.add('is-live');
+    ui.stage.classList.remove('is-locked');
     ui.stopCamera.hidden = false;
     ui.sourceAction.textContent = 'Scanning…';
     await refreshCameraDevices();
@@ -410,6 +415,7 @@ function stopCamera() {
   ui.camera.hidden = true;
   ui.stopCamera.hidden = true;
   ui.sourceAction.disabled = false;
+  ui.stage.classList.remove('is-live', 'is-locked');
   const label = sourceLabels(state.source);
   if (label) ui.sourceAction.textContent = label.button;
   if (state.source !== 'paste') ui.stageEmpty.hidden = false;
@@ -670,11 +676,24 @@ function classifyPayload(rawValue) {
   return { kind: 'text', type: 'TEXT', label: 'Text or data', description: 'The exact content below was read from the QR code.', value: raw };
 }
 
+const EMPTY_ILLUSTRATION = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><path d="M8 8.5h3v3H8zM13 8.5h3v3h-3zM8 13.5h3v3H8zM13 13.5h2.5M13 16.5h3"/></svg>';
+
+function buildEmptyState(message) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'empty-state';
+  wrapper.insertAdjacentHTML('afterbegin', EMPTY_ILLUSTRATION);
+  const text = document.createElement('span');
+  text.textContent = message;
+  wrapper.append(text);
+  return wrapper;
+}
+
 function action(label, onClick, kind = 'action') {
   return { label, onClick, kind };
 }
 
 function showResult({ type, label, description, value, actions = [] }) {
+  ui.resultCard.hidden = false;
   ui.resultType.textContent = type;
   ui.resultLabel.textContent = label;
   ui.resultDescription.textContent = description;
@@ -705,6 +724,7 @@ async function handleScannedValue(rawValue, { source = 'scanner' } = {}) {
   stopCamera();
   const result = classifyPayload(raw);
   state.currentResult = { raw, ...result, source, scannedAt: Date.now() };
+  ui.stage.classList.add('is-locked');
 
   if (result.kind === 'authenticator') {
     try {
@@ -930,10 +950,9 @@ function renderAccounts() {
     .filter((account) => !query || `${account.issuer} ${account.accountName}`.toLowerCase().includes(query))
     .sort((a, b) => Number(b.favorite) - Number(a.favorite) || a.issuer.localeCompare(b.issuer) || a.accountName.localeCompare(b.accountName));
   if (!accounts.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.textContent = state.accounts.length ? 'No authenticators match your search.' : 'No authenticators yet. Scan a setup QR or add one manually.';
-    ui.accounts.append(empty);
+    ui.accounts.append(buildEmptyState(
+      state.accounts.length ? 'No authenticators match your search.' : 'No authenticators yet. Scan a setup QR or add one manually.'
+    ));
     return;
   }
   accounts.forEach((account) => {
@@ -1034,10 +1053,9 @@ function renderHistory() {
   const query = ui.historySearch.value.trim().toLowerCase();
   const entries = state.history.filter((entry) => !query || `${entry.title} ${entry.raw}`.toLowerCase().includes(query));
   if (!entries.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.textContent = state.historyEnabled ? 'No general QR scans saved yet.' : 'History is off. Turn it on above to save future general QR scans locally.';
-    ui.historyList.append(empty);
+    ui.historyList.append(buildEmptyState(
+      state.historyEnabled ? 'No general QR scans saved yet.' : 'History is off. Turn it on above to save future general QR scans locally.'
+    ));
     return;
   }
   entries.forEach((entry) => {
@@ -1292,7 +1310,7 @@ function makeCreatorPayload() {
   throw new Error('Unknown QR template.');
 }
 
-function generateQr() {
+function generateQr({ silent = false } = {}) {
   try {
     const payload = makeCreatorPayload();
     if (typeof window.qrcode !== 'function') throw new Error('The bundled QR creator did not load. Reload the extension from chrome://extensions.');
@@ -1317,10 +1335,29 @@ function generateQr() {
     state.generatedPayload = payload;
     ui.generatedPayload.textContent = payload;
     ui.generatedCard.hidden = false;
-    showToast('QR code generated locally.');
+    ui.createPlaceholder.hidden = true;
+    ui.createPlaceholderText.textContent = 'Enter content above to preview QR';
+    if (!silent) showToast('QR code generated locally.');
   } catch (error) {
+    if (silent) {
+      // Live preview: an incomplete draft is expected, so fall back to the
+      // placeholder instead of raising an error.
+      ui.generatedCard.hidden = true;
+      ui.createPlaceholder.hidden = false;
+      ui.createPlaceholderText.textContent = error.message;
+      state.generatedPayload = '';
+      return;
+    }
     showToast(`Could not create QR code: ${error.message}`, 'error');
   }
+}
+
+// Live preview: regenerate as the user types, debounced so we do not redraw
+// on every keystroke.
+let liveQrTimer = null;
+function scheduleLiveQr() {
+  clearTimeout(liveQrTimer);
+  liveQrTimer = setTimeout(() => generateQr({ silent: true }), 150);
 }
 
 function downloadGeneratedQr() {
@@ -1355,6 +1392,17 @@ async function loadState() {
 
 function bindEvents() {
   $$('.main-tab').forEach((button) => button.addEventListener('click', () => setView(button.dataset.view)));
+  // Keyboard shortcuts: 1-4 jump between the four sections.
+  document.addEventListener('keydown', (event) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const target = event.target;
+    if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+    const views = { 1: 'scan', 2: 'vault', 3: 'create', 4: 'history' };
+    const view = views[event.key];
+    if (!view) return;
+    event.preventDefault();
+    setView(view);
+  });
   $$('.intent-button').forEach((button) => button.addEventListener('click', () => setIntent(button.dataset.intent)));
   $$('.source-tab').forEach((button) => button.addEventListener('click', () => setSource(button.dataset.source)));
   ui.sourceAction.addEventListener('click', runSourceAction);
@@ -1415,8 +1463,15 @@ function bindEvents() {
     saveCreatorDraft(state.creatorTemplate);
     state.creatorTemplate = ui.createTemplate.value;
     renderCreatorFields();
+    scheduleLiveQr();
   });
-  $('#generateQr').addEventListener('click', generateQr);
+  // Live preview is delegated from the document, because the creator fields
+  // are rebuilt every time the Create tab is shown.
+  document.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target && typeof target.closest === 'function' && target.closest('#creatorFields')) scheduleLiveQr();
+  });
+  $('#generateQr').addEventListener('click', () => generateQr());
   $('#copyGenerated').addEventListener('click', () => state.generatedPayload && copyText(state.generatedPayload));
   $('#downloadGenerated').addEventListener('click', downloadGeneratedQr);
   window.addEventListener('unload', stopCamera);

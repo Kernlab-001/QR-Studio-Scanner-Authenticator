@@ -47,6 +47,26 @@ Nothing yet.
 - General QR results always preserve the exact decoded payload. URLs are never
   opened automatically — there is always an explicit button.
 
+### Changed
+
+- **Full UI redesign — "Tactile Obsidian & Electric Coral".** A single coral
+  accent now drives every action, on a neutral obsidian surface scale, with
+  emerald reserved for "local / verified", amber for security notices and
+  rose for destructive actions.
+- The popup is 380px wide and 600px tall, with inline SVG iconography
+  replacing the old glyph characters, a floating glass status pill inside the
+  camera viewfinder, and a scanning reticle that pulses while the camera is
+  live.
+- The result card is now hidden until a QR code is actually decoded, and the
+  Create tab shows a placeholder frame instead of a blank white square until
+  there is something to encode.
+- QR codes now generate live as you type, debounced so the preview keeps up
+  without redrawing on every keystroke.
+- Vault, Create and History panels gained a security banner, a real toolbar
+  hierarchy, illustrated empty states and a refined search field.
+- Keyboard shortcuts: press <kbd>1</kbd>–<kbd>4</kbd> to jump between the four
+  sections.
+
 ### Fixed
 
 - **The popup no longer collapses.** Chrome sizes an extension popup by measuring
