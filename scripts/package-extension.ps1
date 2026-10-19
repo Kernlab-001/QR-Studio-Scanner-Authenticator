@@ -78,24 +78,51 @@ try {
 
     # --- build the zip ---------------------------------------------------------
     $outDir = Join-Path $root $OutputDirectory
-    if (Test-Path $outDir) { Remove-Item $outDir -Recurse -Force }
-    New-Item -ItemType Directory -Path $outDir | Out-Null
-
-    $stageDir = Join-Path $outDir "stage"
-    New-Item -ItemType Directory -Path $stageDir | Out-Null
-
-    foreach ($file in $files) {
-        $target = Join-Path $stageDir $file
-        $parent = Split-Path -Parent $target
-        if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
-        Copy-Item (Join-Path $root $file) $target -Force
-    }
+    if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 
     $zipPath = Join-Path $outDir "qr-studio-$version.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-    Compress-Archive -Path (Join-Path $stageDir "*") -DestinationPath $zipPath -CompressionLevel Optimal
 
-    Remove-Item $stageDir -Recurse -Force
+    # Build the archive entry by entry instead of using Compress-Archive.
+    # Compress-Archive stores Windows-style backslash separators, which the
+    # Chrome Web Store's unzip rejects (it would see a single file literally
+    # named "icons\icon16.png" instead of a folder).
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $stream = [System.IO.File]::Open($zipPath, [System.IO.FileMode]::CreateNew)
+    try {
+        $archive = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
+        try {
+            foreach ($file in $files) {
+                $entryName = ($file -replace "\\", "/")
+                $entry = $archive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+                $entryStream = $entry.Open()
+                try {
+                    $bytes = [System.IO.File]::ReadAllBytes((Join-Path $root $file))
+                    $entryStream.Write($bytes, 0, $bytes.Length)
+                }
+                finally { $entryStream.Dispose() }
+            }
+        }
+        finally { $archive.Dispose() }
+    }
+    finally { $stream.Dispose() }
+
+    # --- verify the archive ----------------------------------------------------
+    $check = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+    try {
+        $names = @($check.Entries | ForEach-Object { $_.FullName })
+        if ($names -notcontains "manifest.json") {
+            throw "manifest.json is not at the root of the zip"
+        }
+        $bad = @($names | Where-Object { $_ -match "\\" })
+        if ($bad.Count -gt 0) {
+            throw "zip entries must use forward slashes, found: $($bad -join ', ')"
+        }
+    }
+    finally { $check.Dispose() }
+    Write-Host "Zip verified - manifest.json at root, $($files.Count) entries" -ForegroundColor Green
 
     $sizeKb = [math]::Round((Get-Item $zipPath).Length / 1KB, 1)
     Write-Host ""

@@ -16,4 +16,6 @@ This extension bundles the following local browser-side libraries. They are incl
 - License: MIT License
 - Copyright: Kazuhiko Arase
 
-The QR Code generator source file retains its copyright and MIT license header.
+Both distributed files retain their upstream copyright and licence header. `qrcode-generator.js` ships the original
+MIT header from Kazuhiko Arase; `jsqr.js` is a bundled build of jsQR 1.4.0 and carries an Apache-2.0 attribution
+header added at the top of the file. The bundled library code itself is unmodified.

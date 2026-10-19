@@ -71,6 +71,21 @@ fi
 rm -rf "$STAGE_DIR"
 ZIP_PATH="$OUT_DIR/qr-studio-$VERSION.zip"
 
+# --- verify the archive --------------------------------------------------------
+if command -v python3 >/dev/null 2>&1; then
+  python3 - "$ZIP_PATH" <<'PY'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+    names = z.namelist()
+if "manifest.json" not in names:
+    raise SystemExit("error: manifest.json is not at the root of the zip")
+bad = [n for n in names if "\\" in n]
+if bad:
+    raise SystemExit("error: zip entries must use forward slashes: " + ", ".join(bad))
+print("Zip verified - manifest.json at root,", len(names), "entries")
+PY
+fi
+
 echo
 echo "Built $ZIP_PATH ($(du -h "$ZIP_PATH" | cut -f1))"
 echo "Shipped files:"

@@ -48,10 +48,40 @@ jobs:
             console.log('all ' + refs.length + ' referenced file(s) present');
           "
 
+      - name: Enforce the local-only promise
+        run: |
+          node -e "
+            const m = require('./manifest.json');
+            const allowed = new Set(['storage', 'activeTab']);
+            const perms = m.permissions || [];
+            const extra = perms.filter((p) => !allowed.has(p));
+            if (extra.length) {
+              throw new Error('unexpected permission(s): ' + extra.join(', '));
+            }
+            if (m.host_permissions && m.host_permissions.length) {
+              throw new Error('host_permissions must stay empty');
+            }
+            if (m.content_scripts) {
+              throw new Error('content_scripts must stay empty');
+            }
+            if (m.optional_permissions && m.optional_permissions.length) {
+              throw new Error('optional_permissions must stay empty');
+            }
+            const csp = m.content_security_policy && m.content_security_policy.extension_pages;
+            if (csp && /https?:/.test(csp)) {
+              throw new Error('the content security policy must not allow remote sources');
+            }
+            console.log('local-only promise intact - permissions:', perms.join(', ') || 'none');
+          "
+
       - name: Check vendored libraries keep their licence headers
         run: |
-          head -5 jsqr.js | grep -qi "license" || { echo "jsqr.js is missing its licence header"; exit 1; }
-          head -5 qrcode-generator.js | grep -qi "license" || { echo "qrcode-generator.js is missing its licence header"; exit 1; }
+          for lib in jsqr.js qrcode-generator.js; do
+            head -30 "$lib" | grep -qi 'licen[cs]e' || {
+              echo "$lib is missing its licence header"; exit 1; }
+            grep -q "$lib" THIRD_PARTY_NOTICES.md || {
+              echo "THIRD_PARTY_NOTICES.md does not mention $lib"; exit 1; }
+          done
           test -f THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md is missing"; exit 1; }
           echo "third-party notices OK"
 
@@ -60,8 +90,10 @@ jobs:
 
       - name: Verify zip root contains manifest.json
         run: |
-          unzip -l dist/qr-studio-*.zip | grep -q " manifest.json" || {
+          unzip -l dist/qr-studio-*.zip | grep -q ' manifest.json' || {
             echo "manifest.json must sit at the root of the zip"; exit 1; }
+          if unzip -Z1 dist/qr-studio-*.zip | grep -q '\\'; then
+            echo "zip entries must use forward slashes, not backslashes"; exit 1; fi
           unzip -l dist/qr-studio-*.zip
 
       - name: Upload the packaged extension

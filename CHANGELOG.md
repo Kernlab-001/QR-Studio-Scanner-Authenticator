@@ -30,6 +30,8 @@ Nothing yet.
   native `BarcodeDetector` API.
 - Dedicated extension icon set (16/32/48/128/512) and a matching flat brand
   mark in the popup header.
+- Apache-2.0 attribution header on the bundled jsQR build, so the shipped
+  archive documents its own licence.
 
 ### Changed
 

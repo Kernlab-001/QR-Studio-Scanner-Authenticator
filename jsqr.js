@@ -1,3 +1,13 @@
+/*!
+ * jsQR - JavaScript QR Code Scanner
+ * Bundled build of jsQR 1.4.0 - https://github.com/cozmo/jsQR
+ * Copyright (c) Cozmo / jsQR contributors
+ *
+ * Licensed under the Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Vendored unmodified for QR Studio. See THIRD_PARTY_NOTICES.md.
+ */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();

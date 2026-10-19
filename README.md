@@ -209,7 +209,10 @@ they verify the manifest parses before zipping.
 
 `.github/workflows/build-extension.yml` runs on every push and pull request. It
 validates `manifest.json`, checks that every file referenced by the manifest
-exists, and builds the distributable zip as a downloadable artifact.
+exists, confirms the local-only promise still holds (no host permissions, no
+content scripts, no remote CSP sources), verifies the vendored libraries still
+carry their licence headers, and builds the distributable zip as a downloadable
+artifact.
 
 ### Requirements for local testing
 
