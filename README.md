@@ -104,23 +104,16 @@ Copy the encoded payload or download the result as a PNG.
 
 ## Install
 
-### Chrome Web Store
-
-**QR Studio is distributed through the Chrome Web Store.** Search for
-*QR Studio — Scanner & Authenticator* in the Chrome Web Store, or open the
-listing page directly from the extension's own entry in
-`chrome://extensions`.
-
-This repository is the **source code**, not a download channel — the published
-extension always comes from the store, so that everyone gets the reviewed
-build and automatic updates.
-
-### Load it locally (development)
+QR Studio is currently **in development and not yet published to the Chrome Web
+Store**. To run it now, load it from source:
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (top right)
 3. Click **Load unpacked** and select this repository folder
 4. Pin **QR Studio** from Chrome's Extensions menu
+
+The store listing is being prepared separately; this repository is the
+**source code**, not a download channel.
 
 ---
 
@@ -152,6 +145,12 @@ service — the extension works with your machine fully offline.
 | General scan history | `chrome.storage.local` | Only if you turn history on (off by default) |
 | Vault accounts & OTP secrets | `chrome.storage.local` | When you save an account |
 | Backup files | Wherever you save them | When you export a backup |
+
+Chrome's user-data rules require disclosure even for data that never leaves the
+device, so the store listing declares exactly two categories:
+**authentication information** (your vault secrets) and **user activity** (your
+opt-in scan history) — both stored locally, for app functionality only, and
+never transmitted.
 
 Authenticator secrets live in the **unencrypted** `chrome.storage.local` of
 your Chrome profile. That is convenient, but it is *not* the same as a

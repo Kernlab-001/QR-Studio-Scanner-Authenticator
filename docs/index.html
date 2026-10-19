@@ -94,9 +94,47 @@
       </p>
 
       <div class="summary">
-        <p><strong>QR Studio does not collect, transmit, sell or share any data.</strong>
-        The extension makes no network requests at all. Everything you scan, create or store
-        stays on your device, inside your own Chrome profile.</p>
+        <p><strong>QR Studio never transmits, sells or shares any data, and collects nothing in
+        the background.</strong> The extension makes no network requests at all. Everything you
+        scan, create or store stays on your device, inside your own Chrome profile.</p>
+        <p style="margin-top:10px">The data you deliberately save &mdash; your authenticator secrets
+        and your opt-in scan history &mdash; is stored <strong>locally only</strong>. It is never
+        sent to us or to anyone else, because there is no server to send it to.</p>
+      </div>
+
+      <h2>Data handling disclosure</h2>
+      <p>Chrome Web Store requires every extension that handles user data to disclose it, even when
+      the data is stored only on the user's own device. QR Studio handles exactly two categories:</p>
+      <table>
+        <thead>
+          <tr><th>Data category</th><th>What it is</th><th>Purpose</th><th>Where it goes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Authentication information</strong></td>
+            <td>The TOTP/HOTP secret, issuer, account name, algorithm, digits, period and counter of
+            each authenticator you save in the vault</td>
+            <td><strong>App functionality</strong> &mdash; generating your rotating codes</td>
+            <td><code>chrome.storage.local</code> on your device. Never transmitted.</td>
+          </tr>
+          <tr>
+            <td><strong>User activity</strong></td>
+            <td>The QR payloads you scan, when you turn on &ldquo;Save general QR scans on this
+            device&rdquo; (off by default)</td>
+            <td><strong>App functionality</strong> &mdash; showing your own scan history</td>
+            <td><code>chrome.storage.local</code> on your device. Never transmitted.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>No other data category is handled. Nothing is collected automatically, nothing is sent
+      anywhere, and no developer or third party can read it.</p>
+
+      <div class="card">
+        <h2>Limited Use disclosure</h2>
+        <p>The use of information received from Google APIs will adhere to the Chrome Web Store User
+        Data Policy, including the Limited Use requirements. QR Studio does not use any Google API.
+        It does not transfer user data to third parties, does not use user data for advertising, and
+        does not allow any human being to read the data it stores.</p>
       </div>
 
       <h2>What the extension does not do</h2>

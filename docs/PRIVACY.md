@@ -5,9 +5,35 @@
 
 ## Summary
 
-**QR Studio does not collect, transmit, sell or share any data.** The extension
-makes no network requests at all. Everything you scan, create or store stays on
-your device, inside your own Chrome profile.
+**QR Studio never transmits, sells or shares any data, and collects nothing in
+the background.** The extension makes no network requests at all. Everything you
+scan, create or store stays on your device, inside your own Chrome profile.
+
+The data you deliberately save — your authenticator secrets and your opt-in
+scan history — is stored **locally only**. It is never sent to us or to anyone
+else, because there is no server to send it to.
+
+## Data handling disclosure
+
+Chrome Web Store requires every extension that handles user data to disclose it,
+even when the data is stored only on the user's own device. QR Studio handles
+exactly two categories:
+
+| Data category | What it is | Purpose | Where it goes |
+|---|---|---|---|
+| **Authentication information** | The TOTP/HOTP secret, issuer, account name, algorithm, digits, period and counter of each authenticator you save in the vault | **App functionality** — generating your rotating codes | `chrome.storage.local` on your device. Never transmitted. |
+| **User activity** | The QR payloads you scan, when you turn on "Save general QR scans on this device" (off by default) | **App functionality** — showing your own scan history | `chrome.storage.local` on your device. Never transmitted. |
+
+No other data category is handled. Nothing is collected automatically, nothing
+is sent anywhere, and no developer or third party can read it.
+
+### Limited Use disclosure
+
+The use of information received from Google APIs will adhere to the Chrome Web
+Store User Data Policy, including the Limited Use requirements. QR Studio does
+not use any Google API. It does not transfer user data to third parties, does
+not use user data for advertising, and does not allow any human being to read
+the data it stores.
 
 ## What the extension does not do
 
