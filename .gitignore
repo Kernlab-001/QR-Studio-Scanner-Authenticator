@@ -24,6 +24,13 @@ release/
 *.crx
 *.pem
 
+# Chrome Web Store submission workspace.
+# These files are kept on the maintainer's machine and used only to fill in
+# the store console - the published extension comes from the Chrome Web Store,
+# not from this repository.
+/store/
+/docs/CHROME_WEB_STORE.md
+
 # Local scratch
 tmp/
 scratch/

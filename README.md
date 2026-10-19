@@ -94,15 +94,26 @@ Copy the encoded payload or download the result as a PNG.
 
 | Scan | Vault |
 |---|---|
-| ![Scan](store/screenshots/scan.png) | ![Vault](store/screenshots/vault.png) |
+| ![Scan](docs/screenshots/scan.jpg) | ![Vault](docs/screenshots/vault.jpg) |
 
 | Create | History |
 |---|---|
-| ![Create](store/screenshots/create.png) | ![History](store/screenshots/history.png) |
+| ![Create](docs/screenshots/create.jpg) | ![History](docs/screenshots/history.jpg) |
 
 ---
 
 ## Install
+
+### Chrome Web Store
+
+**QR Studio is distributed through the Chrome Web Store.** Search for
+*QR Studio — Scanner & Authenticator* in the Chrome Web Store, or open the
+listing page directly from the extension's own entry in
+`chrome://extensions`.
+
+This repository is the **source code**, not a download channel — the published
+extension always comes from the store, so that everyone gets the reviewed
+build and automatic updates.
 
 ### Load it locally (development)
 
@@ -110,12 +121,6 @@ Copy the encoded payload or download the result as a PNG.
 2. Enable **Developer mode** (top right)
 3. Click **Load unpacked** and select this repository folder
 4. Pin **QR Studio** from Chrome's Extensions menu
-
-### Chrome Web Store
-
-The store listing is in progress — see
-[`docs/CHROME_WEB_STORE.md`](docs/CHROME_WEB_STORE.md) for the submission
-checklist and the ready-to-paste listing copy.
 
 ---
 
@@ -182,9 +187,8 @@ Extension/
 ├── jsqr.js                # vendored: jsQR 1.4.0 (Apache-2.0)
 ├── qrcode-generator.js    # vendored: qrcode-generator 1.4.4 (MIT)
 ├── assets/                # logo used by the README
-├── docs/                  # privacy policy (Markdown + standalone page) + store guide
+├── docs/                  # privacy policy (Markdown + standalone page) + gallery
 ├── scripts/               # packaging helpers and the library smoke test
-├── store/                 # Chrome Web Store assets + listing copy
 └── .github/               # CI workflow and issue templates
 ```
 
