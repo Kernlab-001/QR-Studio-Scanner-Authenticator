@@ -86,7 +86,7 @@ jobs:
           echo "third-party notices OK"
 
       - name: Build store-ready zip
-        run: ./scripts/package-extension.sh
+        run: bash ./scripts/package-extension.sh
 
       - name: Verify zip root contains manifest.json
         run: |
