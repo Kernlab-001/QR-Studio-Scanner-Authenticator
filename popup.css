@@ -19,9 +19,14 @@
 * { box-sizing: border-box; }
 html { background: var(--page); }
 body {
+  /* Chrome sizes an extension popup by measuring this document, and a
+     percentage width contributes nothing to that measurement - the popup
+     would collapse to whatever the viewport happens to be. The min-width
+     is the floor that keeps the popup at its real size. */
   width: 370px;
-  height: 570px;
-  max-height: 570px;
+  min-width: 370px;
+  height: 600px;
+  max-height: 600px;
   overflow: hidden;
   margin: 0;
   color: var(--ink);
@@ -201,7 +206,7 @@ code { color: #d1c1ff; }
 .toast { position: fixed; right: 16px; bottom: 15px; z-index: 5; max-width: 355px; padding: 10px 12px; border: 1px solid rgba(99, 226, 176, .34); border-radius: 10px; color: #e9fff5; background: #163a35; box-shadow: 0 12px 25px rgba(0,0,0,.32); font-size: 11px; font-weight: 720; }
 .toast.error { border-color: rgba(255, 120, 144, .36); background: #48212e; }
 
-body.full-camera-page { width: min(760px, 100vw); height: auto; max-height: none; overflow: auto; }
+body.full-camera-page { width: min(760px, 100vw); min-width: 0; height: auto; max-height: none; overflow: auto; }
 body.full-camera-page .app-shell { width: min(700px, 100%); height: auto; min-height: 100vh; margin: auto; overflow: visible; padding: 20px; }
 body.full-camera-page .main-tabs { display: none; }
 body.full-camera-page .view-panel { height: auto; flex: 0 0 auto; overflow: visible; }
@@ -214,19 +219,25 @@ body.full-camera-page .scan-frame i { top: 62px; left: 18px; width: 88px; }
 body.full-camera-page .full-camera-button { display: none; }
 body.full-camera-page .footer-note { display: block; }
 
-@media (max-width: 390px) { body { width: 100%; } }
+/* The popup is a fixed 370px, so the narrow layout rules below only ever
+   matter for the full-screen camera page, which opens as a normal tab. */
+@media (max-width: 390px) {
+  body.full-camera-page { width: 100%; min-width: 0; }
+}
 @media (max-width: 320px) {
-  .app-shell { padding: 8px; }
-  .intent-toggle, .form-grid { grid-template-columns: 1fr; }
-  .generated-card { grid-template-columns: 1fr; }
-  #generatedCanvas { width: min(148px, 100%); height: auto; aspect-ratio: 1 / 1; }
-  .account { grid-template-columns: 32px minmax(0, 1fr); }
-  .account-code { grid-column: 1 / -1; min-width: 0; text-align: left; }
-  .section-heading { flex-wrap: wrap; }
-  .vault-toolbar .compact { flex: 1 1 auto; }
+  body.full-camera-page .app-shell { padding: 8px; }
+  body.full-camera-page .intent-toggle,
+  body.full-camera-page .form-grid { grid-template-columns: 1fr; }
+  body.full-camera-page .generated-card { grid-template-columns: 1fr; }
+  body.full-camera-page #generatedCanvas { width: min(148px, 100%); height: auto; aspect-ratio: 1 / 1; }
+  body.full-camera-page .account { grid-template-columns: 32px minmax(0, 1fr); }
+  body.full-camera-page .account-code { grid-column: 1 / -1; min-width: 0; text-align: left; }
+  body.full-camera-page .section-heading { flex-wrap: wrap; }
+  body.full-camera-page .vault-toolbar .compact { flex: 1 1 auto; }
 }
 @media (max-width: 240px) {
-  .main-tabs, .source-tabs { grid-template-columns: repeat(2, 1fr); }
-  .history-note { margin-left: 0; }
-  .scan-controls { flex-wrap: wrap; }
+  body.full-camera-page .main-tabs,
+  body.full-camera-page .source-tabs { grid-template-columns: repeat(2, 1fr); }
+  body.full-camera-page .history-note { margin-left: 0; }
+  body.full-camera-page .scan-controls { flex-wrap: wrap; }
 }

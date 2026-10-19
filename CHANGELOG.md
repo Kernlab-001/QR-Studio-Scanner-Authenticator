@@ -47,6 +47,16 @@ Nothing yet.
 - General QR results always preserve the exact decoded payload. URLs are never
   opened automatically — there is always an explicit button.
 
+### Fixed
+
+- **The popup no longer collapses.** Chrome sizes an extension popup by measuring
+  the document, and a percentage width contributes nothing to that measurement —
+  the popup was shrinking to a cramped two-column layout with a clipped camera
+  name. The popup now holds its real 370px width.
+- The popup is 600px tall instead of 570px, which is Chrome's maximum popup
+  height. The Scan view now fits without scrolling, so the section heading is
+  never cut off.
+
 ### Security
 
 - No network requests, no analytics, no telemetry, no remote configuration.
