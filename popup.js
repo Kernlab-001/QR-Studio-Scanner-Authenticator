@@ -231,6 +231,8 @@ function setSource(source) {
   // The framing reticle belongs to the camera view only - it would otherwise
   // sit on top of the paste box and the other source panels.
   ui.reticle.hidden = source !== 'camera';
+  ui.stage.classList.toggle('is-paste', source === 'paste');
+  ui.stage.classList.remove('has-result');
   ui.stageEmpty.hidden = source === 'paste';
   ui.scanCanvas.hidden = true;
   ui.camera.hidden = true;
@@ -310,7 +312,7 @@ async function decodeSource(source, { multi = false } = {}) {
     }
   }
   if (typeof window.jsQR !== 'function') throw new Error('The bundled QR decoder did not load. Reload the extension from chrome://extensions.');
-  if (!drawToProcessingCanvas(source, multi ? 1100 : 1400)) return [];
+  if (!drawToProcessingCanvas(source, multi ? 1600 : 1400)) return [];
   const context = ui.processCanvas.getContext('2d', { willReadFrequently: true });
   const { width, height } = ui.processCanvas;
   if (!multi) {
@@ -324,6 +326,16 @@ async function decodeSource(source, { multi = false } = {}) {
 // The bundled decoder returns one code per pass, so a frame that holds several
 // QR codes is read again in overlapping tiles and every distinct payload is
 // kept. That is how one page or image can yield more than one code.
+const MULTI_CODE_TILE_SCALES = [0.5, 0.4];
+
+function tilePositions(size, tile, step) {
+  const positions = [];
+  for (let value = 0; value <= size - tile + 1; value += step) positions.push(Math.round(value));
+  const last = size - tile;
+  if (positions[positions.length - 1] !== last) positions.push(last);
+  return [...new Set(positions)];
+}
+
 function detectAllQRCodes(context, width, height) {
   const found = [];
   const seen = new Set();
@@ -339,14 +351,17 @@ function detectAllQRCodes(context, width, height) {
     return code?.data || '';
   };
   collect(read(0, 0, width, height));
-  const tileWidth = Math.max(80, Math.round(width * 0.6));
-  const tileHeight = Math.max(80, Math.round(height * 0.6));
-  const axis = (size, tile) => [...new Set([0, Math.round((size - tile) * 0.5), size - tile])].filter((value) => value >= 0);
-  for (const y of axis(height, tileHeight)) {
-    for (const x of axis(width, tileWidth)) {
-      // The full pass is repeated here on purpose: a frame with two codes
-      // confuses the single-shot read, while a clean tile still decodes.
-      collect(read(x, y, tileWidth, tileHeight));
+  // Two overlapping grids: the wider one catches the big codes, the finer one
+  // separates codes that sit close to each other.
+  for (const scale of MULTI_CODE_TILE_SCALES) {
+    const tileWidth = Math.max(80, Math.round(width * scale));
+    const tileHeight = Math.max(80, Math.round(height * scale));
+    const stepX = Math.max(1, Math.round(tileWidth / 2));
+    const stepY = Math.max(1, Math.round(tileHeight / 2));
+    for (const y of tilePositions(height, tileHeight, stepY)) {
+      for (const x of tilePositions(width, tileWidth, stepX)) {
+        collect(read(x, y, tileWidth, tileHeight));
+      }
     }
   }
   return found;
@@ -774,6 +789,18 @@ function showResult({ type, label, description, value, actions = [] }) {
     ui.resultActions.append(button);
   });
   ui.resultActions.hidden = actions.length === 0;
+  // Give the stage its height back so the result and the heading above it can
+  // be seen together, and keep the result itself in view.
+  if (state.view === 'scan') {
+    ui.stage.classList.add('has-result');
+    requestAnimationFrame(() => {
+      const panel = ui.resultCard.closest('.view-panel');
+      if (!panel) return;
+      panel.scrollTop = 0;
+      const overflow = ui.resultCard.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom;
+      if (overflow > 0) panel.scrollTop += overflow;
+    });
+  }
 }
 
 // Codes found next to the first one in the same frame are listed underneath.

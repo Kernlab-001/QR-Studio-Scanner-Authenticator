@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The scan panel no longer breaks.** The camera stage now has a fixed height, so
+  nothing shifts when a preview, the paste box or a result appears. The paste box
+  sizes itself instead of being cut off, and the result card is shown without
+  slicing the heading above it.
+- Multi-code recognition sweeps two overlapping tile grids and decodes the frame
+  at full resolution, so codes that sit close together — and coloured or
+  low-contrast codes — are read as well.
 - The camera framing reticle no longer draws over the paste box — it belongs to
   the camera source only.
 - The status pill no longer overlaps the paste field.
