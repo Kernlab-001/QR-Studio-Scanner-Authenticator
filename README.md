@@ -88,7 +88,13 @@ Generate a QR code locally for:
 - map locations
 - contact cards
 
-Copy the encoded payload or download the result as a PNG.
+Copy the encoded payload or download the result as a PNG or SVG.
+
+The style controls set the **module shape** (square, rounded, circle, diamond),
+the **error-correction level** (L/M/Q/H), the **quiet zone**, the **output size**
+and the **foreground and background colours**. If the chosen colours are too
+close for a scanner to read, a warning appears before you export. The finder,
+timing and alignment patterns always stay square, so a styled code still scans.
 
 ### 🕘 History
 

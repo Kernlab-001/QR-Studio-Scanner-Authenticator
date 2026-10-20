@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Styled QR creation.** The Create tab can now set the module shape (square,
+  rounded, circle, diamond), the error-correction level (L/M/Q/H), the quiet
+  zone, the output size and the foreground and background colours, and export
+  the result as PNG or SVG. A low-contrast warning appears before an unscannable
+  code is produced, and the finder, timing and alignment patterns always stay
+  square so a styled code still scans.
+- Arrow-key navigation for the section and source switchers, and a
+  `prefers-reduced-motion` fallback for the scanning reticle.
 - **Multi-code recognition.** A tab, page or image that holds more than one QR
   code is now read in full instead of only the first one. The remaining codes are
   listed under the main result, each with its own copy and open action, and each

@@ -206,6 +206,58 @@
           <option value="contact">Contact card</option>
         </select>
         <div class="creator-fields" id="creatorFields"></div>
+
+        <div class="style-block">
+          <div class="style-row">
+            <span class="style-label">Shape</span>
+            <div class="style-group" role="group" aria-label="Module shape">
+              <button class="style-option active" type="button" data-style="shape" data-value="square" title="Square modules" aria-label="Square modules">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/></svg>
+              </button>
+              <button class="style-option" type="button" data-style="shape" data-value="rounded" title="Rounded modules" aria-label="Rounded modules">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="6"/></svg>
+              </button>
+              <button class="style-option" type="button" data-style="shape" data-value="circle" title="Circle modules" aria-label="Circle modules">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>
+              </button>
+              <button class="style-option" type="button" data-style="shape" data-value="diamond" title="Diamond modules" aria-label="Diamond modules">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3 21,12 12,21 3,12"/></svg>
+              </button>
+            </div>
+            <label class="style-field"><span>Size</span>
+              <select id="qrSize">
+                <option value="256">256</option>
+                <option value="512" selected>512</option>
+                <option value="1024">1024</option>
+              </select>
+            </label>
+          </div>
+          <div class="style-row">
+            <span class="style-label">Recovery</span>
+            <div class="style-group" role="group" aria-label="Error correction level">
+              <button class="style-chip" type="button" data-style="ecl" data-value="L" title="L - recovers from about 7% damage">L</button>
+              <button class="style-chip active" type="button" data-style="ecl" data-value="M" title="M - recovers from about 15% damage">M</button>
+              <button class="style-chip" type="button" data-style="ecl" data-value="Q" title="Q - recovers from about 25% damage">Q</button>
+              <button class="style-chip" type="button" data-style="ecl" data-value="H" title="H - recovers from about 30% damage">H</button>
+            </div>
+            <label class="style-field"><span>Margin</span>
+              <select id="qrMargin">
+                <option value="0">0</option>
+                <option value="2">2</option>
+                <option value="4" selected>4</option>
+                <option value="6">6</option>
+              </select>
+            </label>
+            <label class="style-colour" title="Foreground colour">
+              <input type="color" id="qrForeground" value="#090d1c" aria-label="Foreground colour">
+            </label>
+            <label class="style-colour" title="Background colour">
+              <input type="color" id="qrBackground" value="#ffffff" aria-label="Background colour">
+            </label>
+          </div>
+          <p class="style-warning" id="qrContrastWarning" role="status" hidden></p>
+        </div>
+
         <button class="primary-button full create-button" id="generateQr" type="button">Generate QR code</button>
 
         <div class="create-placeholder" id="createPlaceholder">
@@ -222,6 +274,7 @@
           <div class="result-actions">
             <button class="copy-button" id="copyGenerated" type="button">Copy content</button>
             <button class="action-button" id="downloadGenerated" type="button">Download PNG</button>
+            <button class="action-button" id="downloadSvg" type="button">Download SVG</button>
           </div>
         </section>
       </section>

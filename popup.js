@@ -27,6 +27,7 @@ const state = {
   creatorDrafts: {},
   generatedPayload: '',
   creatorTemplate: 'text',
+  creatorStyle: { ecl: 'M', shape: 'square', foreground: '#090d1c', background: '#ffffff', margin: 4, size: 512 },
   toastTimer: null
 };
 
@@ -88,6 +89,11 @@ const ui = {
   createPlaceholderText: $('#createPlaceholderText'),
   generatedCanvas: $('#generatedCanvas'),
   generatedPayload: $('#generatedPayload'),
+  qrSize: $('#qrSize'),
+  qrMargin: $('#qrMargin'),
+  qrForeground: $('#qrForeground'),
+  qrBackground: $('#qrBackground'),
+  qrContrastWarning: $('#qrContrastWarning'),
   toast: $('#toast')
 };
 
@@ -1471,33 +1477,159 @@ function makeCreatorPayload() {
   throw new Error('Unknown QR template.');
 }
 
+// The generated code can be styled: module shape, colours, quiet zone and
+// error-correction level. Everything is rendered locally on a canvas.
+function drawQrModule(context, shape, x, y, size) {
+  if (shape === 'circle') {
+    context.beginPath();
+    context.arc(x + size / 2, y + size / 2, size * 0.46, 0, Math.PI * 2);
+    context.fill();
+    return;
+  }
+  if (shape === 'diamond') {
+    context.beginPath();
+    context.moveTo(x + size / 2, y);
+    context.lineTo(x + size, y + size / 2);
+    context.lineTo(x + size / 2, y + size);
+    context.lineTo(x, y + size / 2);
+    context.closePath();
+    context.fill();
+    return;
+  }
+  if (shape === 'rounded' && typeof context.roundRect === 'function') {
+    context.beginPath();
+    context.roundRect(x, y, size, size, size * 0.32);
+    context.fill();
+    return;
+  }
+  context.fillRect(x, y, size, size);
+}
+
+function buildQr(payload, style) {
+  const qr = window.qrcode(0, style.ecl);
+  qr.addData(payload);
+  qr.make();
+  return qr;
+}
+
+// Styling the finder, timing and alignment patterns would break the grid a
+// scanner locks onto, so those modules always stay square. Only the data
+// modules take the chosen shape.
+function alignmentRegions(qr) {
+  const cells = qr.getModuleCount();
+  const regions = [];
+  for (let row = 2; row < cells - 2; row += 1) {
+    for (let column = 2; column < cells - 2; column += 1) {
+      if (!qr.isDark(row, column)) continue;
+      let matches = true;
+      for (let dr = -2; dr <= 2 && matches; dr += 1) {
+        for (let dc = -2; dc <= 2; dc += 1) {
+          const expected = Math.max(Math.abs(dr), Math.abs(dc)) !== 1;
+          if (qr.isDark(row + dr, column + dc) !== expected) { matches = false; break; }
+        }
+      }
+      if (matches) regions.push([row - 2, column - 2]);
+    }
+  }
+  return regions;
+}
+
+function keepsSquare(qr, row, column, cells, alignment) {
+  if (row < 7 && column < 7) return true;
+  if (row < 7 && column >= cells - 7) return true;
+  if (row >= cells - 7 && column < 7) return true;
+  if (row === 6 || column === 6) return true;
+  return alignment.some(([top, left]) => row >= top && row < top + 5 && column >= left && column < left + 5);
+}
+
+function drawQrMatrix(context, qr, style, moduleSize) {
+  const cells = qr.getModuleCount();
+  const alignment = alignmentRegions(qr);
+  const total = (cells + style.margin * 2) * moduleSize;
+  context.fillStyle = style.background;
+  context.fillRect(0, 0, total, total);
+  context.fillStyle = style.foreground;
+  for (let row = 0; row < cells; row += 1) {
+    for (let column = 0; column < cells; column += 1) {
+      if (!qr.isDark(row, column)) continue;
+      const shape = keepsSquare(qr, row, column, cells, alignment) ? 'square' : style.shape;
+      drawQrModule(context, shape, (column + style.margin) * moduleSize, (row + style.margin) * moduleSize, moduleSize);
+    }
+  }
+  return total;
+}
+
+function buildQrSvg(qr, style, moduleSize) {
+  const cells = qr.getModuleCount();
+  const alignment = alignmentRegions(qr);
+  const total = (cells + style.margin * 2) * moduleSize;
+  const parts = [];
+  for (let row = 0; row < cells; row += 1) {
+    for (let column = 0; column < cells; column += 1) {
+      if (!qr.isDark(row, column)) continue;
+      const x = (column + style.margin) * moduleSize;
+      const y = (row + style.margin) * moduleSize;
+      const shape = keepsSquare(qr, row, column, cells, alignment) ? 'square' : style.shape;
+      if (shape === 'circle') {
+        parts.push(`<circle cx="${x + moduleSize / 2}" cy="${y + moduleSize / 2}" r="${moduleSize * 0.46}"/>`);
+      } else if (shape === 'diamond') {
+        parts.push(`<polygon points="${x + moduleSize / 2},${y} ${x + moduleSize},${y + moduleSize / 2} ${x + moduleSize / 2},${y + moduleSize} ${x},${y + moduleSize / 2}"/>`);
+      } else {
+        const radius = shape === 'rounded' ? moduleSize * 0.32 : 0;
+        parts.push(`<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}"${radius ? ` rx="${radius}"` : ''}/>`);
+      }
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${total}" height="${total}" viewBox="0 0 ${total} ${total}"><rect width="${total}" height="${total}" fill="${style.background}"/><g fill="${style.foreground}">${parts.join('')}</g></svg>`;
+}
+
+function relativeLuminance(hex) {
+  const value = String(hex).replace('#', '').trim();
+  const full = value.length === 3 ? value.split('').map((part) => part + part).join('') : value;
+  if (full.length !== 6) return 0;
+  const channel = (part) => {
+    const ratio = parseInt(part, 16) / 255;
+    return ratio <= 0.03928 ? ratio / 12.92 : Math.pow((ratio + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * channel(full.slice(0, 2)) + 0.7152 * channel(full.slice(2, 4)) + 0.0722 * channel(full.slice(4, 6));
+}
+
+function contrastRatio(foreground, background) {
+  const a = relativeLuminance(foreground);
+  const b = relativeLuminance(background);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+// A code that is too pale to read is still generated, but the user is told
+// before they print it.
+function updateContrastWarning() {
+  const style = state.creatorStyle;
+  const ratio = contrastRatio(style.foreground, style.background);
+  const tooLow = ratio < 3;
+  ui.qrContrastWarning.hidden = !tooLow;
+  if (tooLow) ui.qrContrastWarning.textContent = `Low contrast (${ratio.toFixed(1)}:1) - this code may not scan reliably.`;
+  return ratio;
+}
+
 function generateQr({ silent = false } = {}) {
   try {
     const payload = makeCreatorPayload();
     if (typeof window.qrcode !== 'function') throw new Error('The bundled QR creator did not load. Reload the extension from chrome://extensions.');
-    const qr = window.qrcode(0, 'M');
-    qr.addData(payload);
-    qr.make();
-    const cells = qr.getModuleCount();
-    const margin = 4;
-    const scale = Math.max(5, Math.floor(300 / (cells + margin * 2)));
-    const dimension = (cells + margin * 2) * scale;
+    const style = state.creatorStyle;
+    const qr = buildQr(payload, style);
+    const modules = qr.getModuleCount() + style.margin * 2;
+    const dimension = Math.max(modules, Math.round(480 / modules) * modules);
     ui.generatedCanvas.width = dimension;
     ui.generatedCanvas.height = dimension;
     const context = ui.generatedCanvas.getContext('2d');
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, dimension, dimension);
-    context.fillStyle = '#090d1c';
-    for (let row = 0; row < cells; row += 1) {
-      for (let column = 0; column < cells; column += 1) {
-        if (qr.isDark(row, column)) context.fillRect((column + margin) * scale, (row + margin) * scale, scale, scale);
-      }
-    }
+    context.clearRect(0, 0, dimension, dimension);
+    drawQrMatrix(context, qr, style, dimension / modules);
     state.generatedPayload = payload;
     ui.generatedPayload.textContent = payload;
     ui.generatedCard.hidden = false;
     ui.createPlaceholder.hidden = true;
     ui.createPlaceholderText.textContent = 'Enter content above to preview QR';
+    updateContrastWarning();
     if (!silent) showToast('QR code generated locally.');
   } catch (error) {
     if (silent) {
@@ -1523,9 +1655,27 @@ function scheduleLiveQr() {
 
 function downloadGeneratedQr() {
   if (!state.generatedPayload) return;
-  ui.generatedCanvas.toBlob((blob) => {
+  const style = state.creatorStyle;
+  const qr = buildQr(state.generatedPayload, style);
+  const modules = qr.getModuleCount() + style.margin * 2;
+  const dimension = Math.max(modules, Math.floor(style.size / modules) * modules);
+  const canvas = document.createElement('canvas');
+  canvas.width = dimension;
+  canvas.height = dimension;
+  drawQrMatrix(canvas.getContext('2d'), qr, style, dimension / modules);
+  canvas.toBlob((blob) => {
     if (blob) downloadBlob(blob, 'qr-studio-code.png');
   }, 'image/png');
+}
+
+function downloadGeneratedSvg() {
+  if (!state.generatedPayload) return;
+  const style = state.creatorStyle;
+  const qr = buildQr(state.generatedPayload, style);
+  const modules = qr.getModuleCount() + style.margin * 2;
+  const dimension = Math.max(modules, Math.floor(style.size / modules) * modules);
+  const svg = buildQrSvg(qr, style, dimension / modules);
+  downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), 'qr-studio-code.svg');
 }
 
 async function clearHistory() {
@@ -1553,6 +1703,26 @@ async function loadState() {
 
 function bindEvents() {
   $$('.main-tab').forEach((button) => button.addEventListener('click', () => setView(button.dataset.view)));
+  // Arrow keys move between tabs, the way the tab pattern expects.
+  function bindArrowKeys(container, attribute) {
+    if (!container) return;
+    container.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      const items = [...container.querySelectorAll(`[${attribute}]`)];
+      const index = items.indexOf(document.activeElement);
+      if (index < 0) return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === 'ArrowRight') next = (index + 1) % items.length;
+      else if (event.key === 'ArrowLeft') next = (index - 1 + items.length) % items.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = items.length - 1;
+      items[next].focus();
+      items[next].click();
+    });
+  }
+  bindArrowKeys($('.main-tabs'), 'data-view');
+  bindArrowKeys($('.source-tabs'), 'data-source');
   // Keyboard shortcuts: 1-4 jump between the four sections.
   document.addEventListener('keydown', (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -1636,6 +1806,29 @@ function bindEvents() {
   $('#generateQr').addEventListener('click', () => generateQr());
   $('#copyGenerated').addEventListener('click', () => state.generatedPayload && copyText(state.generatedPayload));
   $('#downloadGenerated').addEventListener('click', downloadGeneratedQr);
+  $('#downloadSvg').addEventListener('click', downloadGeneratedSvg);
+  // Style controls for the generated code.
+  $$('.style-option, .style-chip').forEach((button) => {
+    button.addEventListener('click', () => {
+      const group = button.dataset.style;
+      state.creatorStyle[group] = button.dataset.value;
+      $$(`[data-style="${group}"]`).forEach((item) => item.classList.toggle('active', item === button));
+      updateContrastWarning();
+      scheduleLiveQr();
+    });
+  });
+  ui.qrSize.addEventListener('change', () => { state.creatorStyle.size = Number(ui.qrSize.value); });
+  ui.qrMargin.addEventListener('change', () => { state.creatorStyle.margin = Number(ui.qrMargin.value); scheduleLiveQr(); });
+  ui.qrForeground.addEventListener('input', () => {
+    state.creatorStyle.foreground = ui.qrForeground.value;
+    updateContrastWarning();
+    scheduleLiveQr();
+  });
+  ui.qrBackground.addEventListener('input', () => {
+    state.creatorStyle.background = ui.qrBackground.value;
+    updateContrastWarning();
+    scheduleLiveQr();
+  });
   window.addEventListener('unload', stopCamera);
 }
 
