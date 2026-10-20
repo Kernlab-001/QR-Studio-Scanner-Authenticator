@@ -9,11 +9,14 @@
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img class="brand-mark" src="icons/icon128.png" alt="" width="34" height="34">
         <div class="brand-copy">
           <p class="eyebrow">LOCAL TOOLKIT</p>
           <h1>QR Studio</h1>
         </div>
+        <button class="icon-button" id="openFullPage" type="button" title="Open in a new tab" aria-label="Open QR Studio in a new tab">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/></svg>
+        </button>
         <span class="local-badge" title="No QR content is uploaded">Local</span>
       </header>
 
@@ -85,11 +88,12 @@
 
           <div class="scanner-stage" id="scannerStage">
             <span class="stage-status" id="scannerStatus">Ready</span>
-            <div class="reticle" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <div class="reticle" id="reticle" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
             <video id="camera" autoplay muted playsinline hidden></video>
             <canvas id="scanCanvas" hidden></canvas>
             <canvas id="processCanvas" hidden></canvas>
             <div class="stage-empty" id="stageEmpty">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.2-2h7.6l1.2 2h3A1.5 1.5 0 0 1 21.5 10v7a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 17v-7A1.5 1.5 0 0 1 4 8.5Z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
               <strong id="stageTitle">Camera scanner ready</strong>
               <small id="stageHint">Start the camera and place a QR code inside the frame.</small>
             </div>
@@ -118,6 +122,10 @@
           </div>
           <p class="result-description" id="resultDescription">This scanner reads the exact QR content—words, numbers, website links, setup codes, and more.</p>
           <pre class="result-value" id="resultValue">Nothing scanned yet.</pre>
+          <div class="result-list" id="resultList" hidden>
+            <p class="result-list-heading" id="resultListHeading"></p>
+            <div class="result-list-items" id="resultListItems"></div>
+          </div>
           <div class="result-actions" id="resultActions" hidden></div>
         </section>
       </section>

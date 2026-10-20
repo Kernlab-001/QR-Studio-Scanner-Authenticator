@@ -45,16 +45,23 @@ OTP generation, and encrypted backups. It makes zero network requests.
 
 Decode a QR code from five sources:
 
-- **Camera** — live scanning with an in-page scanner, or a dedicated full-screen
-  camera tab for phones and awkward angles.
+- **Camera** — live scanning with an in-page scanner, or a dedicated standalone
+  tab for phones and awkward angles.
 - **Image** — pick any image file from your computer.
 - **Tab** — capture and decode the QR code in the current browser tab.
 - **Paste** — paste raw QR contents (or an `otpauth://` setup URI) as text.
 - **Clipboard** — paste an image with `Ctrl`/`Cmd` + `V`, or drop an image onto
   the scanner.
+- **Several codes at once** — when a page, tab or image holds more than one QR
+  code, all of them are recognised. The first one opens as the result and the
+  others are listed underneath, each with its own copy and open action.
 
 The decoder is bundled locally, so scanning works on Chrome builds that lack
 the native `BarcodeDetector` API.
+
+Press the expand button in the header to open QR Studio in its own tab. All four
+sections — Scan, Vault, Create and History — then use the roomy, centred
+layout instead of the compact popup.
 
 ### 🗝️ Vault — offline authenticator
 

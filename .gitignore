@@ -35,3 +35,7 @@ release/
 tmp/
 scratch/
 .DS_Store
+
+# The untouched master artwork stays on the maintainer's machine; the
+# processed icons live in icons/ and assets/logo.png.
+assets/logo-source.png

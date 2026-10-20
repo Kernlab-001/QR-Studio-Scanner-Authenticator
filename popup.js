@@ -39,6 +39,7 @@ const ui = {
   processCanvas: $('#processCanvas'),
   stage: $('#scannerStage'),
   stageEmpty: $('#stageEmpty'),
+  reticle: $('#reticle'),
   stageTitle: $('#stageTitle'),
   stageHint: $('#stageHint'),
   pastePanel: $('#pastePanel'),
@@ -46,6 +47,7 @@ const ui = {
   sourceAction: $('#sourceAction'),
   stopCamera: $('#stopCamera'),
   openFullCamera: $('#openFullCamera'),
+  openFullPage: $('#openFullPage'),
   imageInput: $('#imageInput'),
   cameraPicker: $('#cameraPicker'),
   cameraSelect: $('#cameraSelect'),
@@ -56,6 +58,9 @@ const ui = {
   resultDescription: $('#resultDescription'),
   resultValue: $('#resultValue'),
   resultActions: $('#resultActions'),
+  resultList: $('#resultList'),
+  resultListHeading: $('#resultListHeading'),
+  resultListItems: $('#resultListItems'),
   vaultCount: $('#vaultCount'),
   accounts: $('#accounts'),
   vaultSearch: $('#vaultSearch'),
@@ -223,6 +228,9 @@ function setSource(source) {
   });
   ui.cameraPicker.hidden = true;
   ui.pastePanel.hidden = source !== 'paste';
+  // The framing reticle belongs to the camera view only - it would otherwise
+  // sit on top of the paste box and the other source panels.
+  ui.reticle.hidden = source !== 'camera';
   ui.stageEmpty.hidden = source === 'paste';
   ui.scanCanvas.hidden = true;
   ui.camera.hidden = true;
@@ -276,10 +284,9 @@ async function getNativeDetector() {
   return state.nativeDetector;
 }
 
-function drawToProcessingCanvas(source) {
+function drawToProcessingCanvas(source, maxDimension = 1400) {
   const { width, height } = sourceSize(source);
   if (!width || !height) return false;
-  const maxDimension = 1400;
   const scale = Math.min(1, maxDimension / Math.max(width, height));
   const targetWidth = Math.max(1, Math.round(width * scale));
   const targetHeight = Math.max(1, Math.round(height * scale));
@@ -291,7 +298,7 @@ function drawToProcessingCanvas(source) {
   return true;
 }
 
-async function decodeSource(source) {
+async function decodeSource(source, { multi = false } = {}) {
   const nativeDetector = await getNativeDetector();
   if (nativeDetector) {
     try {
@@ -303,11 +310,46 @@ async function decodeSource(source) {
     }
   }
   if (typeof window.jsQR !== 'function') throw new Error('The bundled QR decoder did not load. Reload the extension from chrome://extensions.');
-  if (!drawToProcessingCanvas(source)) return [];
+  if (!drawToProcessingCanvas(source, multi ? 1100 : 1400)) return [];
   const context = ui.processCanvas.getContext('2d', { willReadFrequently: true });
-  const image = context.getImageData(0, 0, ui.processCanvas.width, ui.processCanvas.height);
-  const code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
-  return code?.data ? [code.data] : [];
+  const { width, height } = ui.processCanvas;
+  if (!multi) {
+    const image = context.getImageData(0, 0, width, height);
+    const code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+    return code?.data ? [code.data] : [];
+  }
+  return detectAllQRCodes(context, width, height);
+}
+
+// The bundled decoder returns one code per pass, so a frame that holds several
+// QR codes is read again in overlapping tiles and every distinct payload is
+// kept. That is how one page or image can yield more than one code.
+function detectAllQRCodes(context, width, height) {
+  const found = [];
+  const seen = new Set();
+  const collect = (value) => {
+    const text = String(value || '').trim();
+    if (!text || seen.has(text)) return;
+    seen.add(text);
+    found.push(text);
+  };
+  const read = (x, y, tileWidth, tileHeight) => {
+    const image = context.getImageData(x, y, tileWidth, tileHeight);
+    const code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+    return code?.data || '';
+  };
+  collect(read(0, 0, width, height));
+  const tileWidth = Math.max(80, Math.round(width * 0.6));
+  const tileHeight = Math.max(80, Math.round(height * 0.6));
+  const axis = (size, tile) => [...new Set([0, Math.round((size - tile) * 0.5), size - tile])].filter((value) => value >= 0);
+  for (const y of axis(height, tileHeight)) {
+    for (const x of axis(width, tileWidth)) {
+      // The full pass is repeated here on purpose: a frame with two codes
+      // confuses the single-shot read, while a clean tile still decodes.
+      collect(read(x, y, tileWidth, tileHeight));
+    }
+  }
+  return found;
 }
 
 async function refreshCameraDevices() {
@@ -434,12 +476,12 @@ async function scanImageFile(file) {
     const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
     try {
       showScanPreview(bitmap);
-      const values = await decodeSource(bitmap);
+      const values = await decodeSource(bitmap, { multi: true });
       if (!values.length) {
         showResult({ type: 'NO QR', label: 'No QR code found', description: 'Try a clearer image with the entire QR code visible, well-lit, and not too small.', value: '', actions: [] });
         setScannerStatus('No QR found', 'error');
       } else {
-        await handleScannedValue(values[0], { source: 'image' });
+        await handleScannedValue(values[0], { source: 'image', extra: values.slice(1) });
       }
     } finally {
       bitmap.close?.();
@@ -466,12 +508,12 @@ async function scanCurrentTab() {
     const bitmap = await createImageBitmap(await response.blob());
     try {
       showScanPreview(bitmap);
-      const values = await decodeSource(bitmap);
+      const values = await decodeSource(bitmap, { multi: true });
       if (!values.length) {
         showResult({ type: 'NO QR', label: 'No QR code found on this tab', description: 'Only the visible part of the page is scanned. Scroll the QR code fully into view and try again.', value: '', actions: [] });
         setScannerStatus('No QR found', 'error');
       } else {
-        await handleScannedValue(values[0], { source: 'current tab' });
+        await handleScannedValue(values[0], { source: 'current tab', extra: values.slice(1) });
       }
     } finally {
       bitmap.close?.();
@@ -509,6 +551,28 @@ function openFullCameraPage() {
     }
   } catch (error) {
     console.warn('Could not open the extension camera tab.', error);
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
+// Opens the current section in its own tab, where the extension gets the
+// roomy layout and every section stays reachable.
+function openFullPage() {
+  const view = state.view || 'scan';
+  const source = state.source || 'camera';
+  const query = view === 'scan' && source === 'camera'
+    ? 'camera=1'
+    : `view=${encodeURIComponent(view)}&source=${encodeURIComponent(source)}`;
+  const url = isExtensionPage()
+    ? chrome.runtime.getURL(`popup.html?${query}`)
+    : new URL(`popup.html?${query}`, window.location.href).href;
+  try {
+    if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+      chrome.tabs.create({ url });
+      return;
+    }
+  } catch (error) {
+    console.warn('Could not open the extension tab.', error);
   }
   window.open(url, '_blank', 'noopener');
 }
@@ -699,6 +763,8 @@ function showResult({ type, label, description, value, actions = [] }) {
   ui.resultDescription.textContent = description;
   ui.resultValue.textContent = value;
   ui.resultActions.replaceChildren();
+  ui.resultList.hidden = true;
+  ui.resultListItems.replaceChildren();
   actions.forEach((item) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -710,6 +776,67 @@ function showResult({ type, label, description, value, actions = [] }) {
   ui.resultActions.hidden = actions.length === 0;
 }
 
+// Codes found next to the first one in the same frame are listed underneath.
+function renderExtraResults(rawValues) {
+  ui.resultListItems.replaceChildren();
+  ui.resultList.hidden = !rawValues.length;
+  if (!rawValues.length) return;
+  ui.resultListHeading.textContent = `${rawValues.length} more code${rawValues.length === 1 ? '' : 's'} in the same frame`;
+  rawValues.forEach((raw) => {
+    const result = classifyPayload(raw);
+    const row = document.createElement('div');
+    row.className = 'result-list-item';
+
+    const chip = document.createElement('span');
+    chip.className = 'result-type-chip';
+    chip.textContent = result.type;
+
+    const copy = document.createElement('div');
+    copy.className = 'result-list-copy';
+    const label = document.createElement('p');
+    label.className = 'result-list-label';
+    label.textContent = result.label;
+    const value = document.createElement('p');
+    value.className = 'result-list-value';
+    value.textContent = result.value;
+    copy.append(label, value);
+
+    const actions = document.createElement('div');
+    actions.className = 'result-list-actions';
+    const openButton = document.createElement('button');
+    openButton.type = 'button';
+    openButton.className = 'mini-button';
+    if (result.kind === 'authenticator') {
+      openButton.textContent = 'Import';
+      openButton.addEventListener('click', () => {
+        try {
+          reviewAccount(parseOtpAuth(raw));
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      });
+    } else if (result.kind === 'url' || result.kind === 'email' || result.kind === 'phone' || result.kind === 'sms') {
+      openButton.textContent = 'Open';
+      openButton.addEventListener('click', () => openExternal(result.url || raw));
+    } else if (result.kind === 'location') {
+      const coordinates = raw.replace(/^geo:/i, '').split('?')[0];
+      openButton.textContent = 'Open map';
+      openButton.addEventListener('click', () => openExternal(`https://www.google.com/maps?q=${encodeURIComponent(coordinates)}`));
+    } else {
+      openButton.hidden = true;
+    }
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.className = 'mini-button';
+    copyButton.textContent = 'Copy';
+    copyButton.addEventListener('click', () => copyText(raw));
+    actions.append(openButton, copyButton);
+
+    row.append(chip, copy, actions);
+    ui.resultListItems.append(row);
+  });
+}
+
 function openExternal(url) {
   try {
     chrome.tabs.create({ url }).catch(() => window.open(url, '_blank', 'noopener,noreferrer'));
@@ -718,7 +845,7 @@ function openExternal(url) {
   }
 }
 
-async function handleScannedValue(rawValue, { source = 'scanner' } = {}) {
+async function handleScannedValue(rawValue, { source = 'scanner', extra = [] } = {}) {
   const raw = String(rawValue || '').trim();
   if (!raw || state.scanInFlight && state.currentResult?.raw === raw) return;
   stopCamera();
@@ -742,6 +869,7 @@ async function handleScannedValue(rawValue, { source = 'scanner' } = {}) {
       showResult({ type: 'AUTH QR', label: 'Authenticator data needs review', description: error.message, value: redactOtpUri(raw), actions: [action('Paste & edit manually', () => { setView('vault'); openManualForm(); ui.manualUri.value = raw; })] });
       setScannerStatus('Needs review', 'error');
     }
+    renderExtraResults(extra);
     return;
   }
 
@@ -754,12 +882,17 @@ async function handleScannedValue(rawValue, { source = 'scanner' } = {}) {
       actions: [action('Use as General QR', () => { setIntent('general'); presentGeneralResult(result, raw); })]
     });
     setScannerStatus('Not a setup QR', 'error');
+    renderExtraResults(extra);
     return;
   }
 
   presentGeneralResult(result, raw);
   await saveHistoryEntry({ raw, source, result });
+  for (const extraRaw of extra) {
+    await saveHistoryEntry({ raw: extraRaw, source, result: classifyPayload(extraRaw) });
+  }
   setScannerStatus('Decoded');
+  renderExtraResults(extra);
 }
 
 function presentGeneralResult(result, raw) {
@@ -1408,6 +1541,7 @@ function bindEvents() {
   ui.sourceAction.addEventListener('click', runSourceAction);
   ui.stopCamera.addEventListener('click', stopCamera);
   ui.openFullCamera.addEventListener('click', openFullCameraPage);
+  ui.openFullPage.addEventListener('click', openFullPage);
   ui.imageInput.addEventListener('change', (event) => scanImageFile(event.target.files[0]));
   $('#decodePaste').addEventListener('click', decodePastedContent);
   $('#refreshCameras').addEventListener('click', refreshCameraDevices);
@@ -1483,8 +1617,18 @@ setSource('camera');
 renderCreatorFields();
 loadState().catch((error) => showToast(`Could not load saved data: ${error.message}`, 'error'));
 
-if (new URLSearchParams(window.location.search).has('camera')) {
-  document.body.classList.add('full-camera-page');
+// Opened as its own tab (from the popup) the extension uses the wide, centred
+// layout and the section switcher stays available.
+const pageParams = new URLSearchParams(window.location.search);
+if (pageParams.has('camera') || pageParams.has('view')) {
+  document.body.classList.add('full-page');
+}
+if (pageParams.has('camera')) {
   setView('scan');
   setSource('camera');
+} else if (pageParams.has('view')) {
+  const requestedView = pageParams.get('view');
+  if (['scan', 'vault', 'create', 'history'].includes(requestedView)) setView(requestedView);
+  const requestedSource = pageParams.get('source');
+  if (['camera', 'image', 'tab', 'paste'].includes(requestedSource)) setSource(requestedSource);
 }

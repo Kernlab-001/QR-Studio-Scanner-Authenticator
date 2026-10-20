@@ -7,7 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **Multi-code recognition.** A tab, page or image that holds more than one QR
+  code is now read in full instead of only the first one. The remaining codes are
+  listed under the main result, each with its own copy and open action, and each
+  is written to the scan history like any other scan.
+- **Standalone tab for every section.** The header expand button opens QR Studio
+  in its own tab, where the section switcher stays visible and Scan, Vault,
+  Create and History all use the roomy, centred layout.
+- A new icon set (16/32/48/128/512) built from the supplied artwork, and the
+  same artwork used as the in-app brand mark in the popup header.
+
+### Fixed
+
+- The camera framing reticle no longer draws over the paste box — it belongs to
+  the camera source only.
+- The status pill no longer overlaps the paste field.
+- The toolbar icons fill their canvas, so they line up with the neighbouring
+  extensions in the Chrome toolbar.
+
+### Changed
+
+- The full-page layout is shared by all four sections instead of the camera view
+  only, and the standalone tab keeps a default section selected.
 
 ## [2.0.0] — 2026-10-20
 
@@ -46,9 +69,6 @@ Nothing yet.
   of cutting content off.
 - General QR results always preserve the exact decoded payload. URLs are never
   opened automatically — there is always an explicit button.
-
-### Changed
-
 - **Full UI redesign — "Tactile Obsidian & Electric Coral".** A single coral
   accent now drives every action, on a neutral obsidian surface scale, with
   emerald reserved for "local / verified", amber for security notices and
@@ -72,7 +92,7 @@ Nothing yet.
 - **The popup no longer collapses.** Chrome sizes an extension popup by measuring
   the document, and a percentage width contributes nothing to that measurement —
   the popup was shrinking to a cramped two-column layout with a clipped camera
-  name. The popup now holds its real 370px width.
+  name. The popup now holds its real 380px width.
 - The popup is 600px tall instead of 570px, which is Chrome's maximum popup
   height. The Scan view now fits without scrolling, so the section heading is
   never cut off.
