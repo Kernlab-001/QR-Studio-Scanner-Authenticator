@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The **Tab** source is now selected by default when the popup opens, so the
+  page you are looking at can be scanned straight away. The camera, image and
+  paste sources are one click away.
+- Every code found in a frame is now shown as a full result of its own - type,
+  label, complete payload and its own open and copy buttons - instead of a
+  single squeezed line.
 - The full-page layout is shared by all four sections instead of the camera view
   only, and the standalone tab keeps a default section selected.
 

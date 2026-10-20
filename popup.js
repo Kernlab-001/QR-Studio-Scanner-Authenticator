@@ -9,7 +9,7 @@ const STORAGE = {
 const state = {
   view: 'scan',
   intent: 'general',
-  source: 'camera',
+  source: 'tab',
   stream: null,
   scanTimer: null,
   scanSession: 0,
@@ -818,15 +818,16 @@ function renderExtraResults(rawValues) {
     chip.className = 'result-type-chip';
     chip.textContent = result.type;
 
-    const copy = document.createElement('div');
-    copy.className = 'result-list-copy';
+    const head = document.createElement('div');
+    head.className = 'result-list-head';
     const label = document.createElement('p');
     label.className = 'result-list-label';
     label.textContent = result.label;
-    const value = document.createElement('p');
+    head.append(chip, label);
+
+    const value = document.createElement('pre');
     value.className = 'result-list-value';
     value.textContent = result.value;
-    copy.append(label, value);
 
     const actions = document.createElement('div');
     actions.className = 'result-list-actions';
@@ -859,7 +860,7 @@ function renderExtraResults(rawValues) {
     copyButton.addEventListener('click', () => copyText(raw));
     actions.append(openButton, copyButton);
 
-    row.append(chip, copy, actions);
+    row.append(head, value, actions);
     ui.resultListItems.append(row);
   });
 }
@@ -1640,7 +1641,7 @@ function bindEvents() {
 
 setInterval(() => state.accountUpdaters.forEach((update) => update()), 1000);
 bindEvents();
-setSource('camera');
+setSource('tab');
 renderCreatorFields();
 loadState().catch((error) => showToast(`Could not load saved data: ${error.message}`, 'error'));
 

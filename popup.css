@@ -623,12 +623,12 @@ code { color: #e9d5ff; }
 /* several codes recognised in one frame */
 .result-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
 .result-list-heading { margin: 0 0 8px; color: var(--text-muted); font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
-.result-list-items { display: grid; gap: 6px; }
-.result-list-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--bg-app); }
-.result-list-copy { min-width: 0; }
+.result-list-items { display: grid; gap: 7px; }
+.result-list-item { display: grid; gap: 6px; padding: 9px 10px; border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--bg-app); }
+.result-list-head { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .result-list-label { margin: 0; overflow: hidden; color: var(--text-primary); font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.result-list-value { margin: 2px 0 0; overflow: hidden; color: var(--text-muted); font: 9.5px/1.35 var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
-.result-list-actions { display: flex; gap: 4px; }
+.result-list-value { max-height: 54px; margin: 0; overflow: hidden; color: var(--text-secondary); font: 9.5px/1.4 var(--font-mono); overflow-wrap: anywhere; white-space: pre-wrap; }
+.result-list-actions { display: flex; gap: 5px; }
 
 /* ---------------------------------------------------------------- vault */
 .security-note {
