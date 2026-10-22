@@ -27,7 +27,7 @@ const state = {
   creatorDrafts: {},
   generatedPayload: '',
   creatorTemplate: 'text',
-  creatorStyle: { ecl: 'M', shape: 'square', foreground: '#090d1c', background: '#ffffff', margin: 4, size: 512 },
+  creatorStyle: { ecl: 'M', shape: 'square', foreground: '#090d1c', background: '#ffffff', margin: 0, size: 512 },
   toastTimer: null
 };
 
