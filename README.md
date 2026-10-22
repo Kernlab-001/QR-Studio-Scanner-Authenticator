@@ -260,7 +260,7 @@ Found a security issue instead? Please follow
 
 ## License
 
-Released under the [MIT License](LICENSE) © 2026 Daksh Jain.
+Released under the [MIT License](LICENSE) © 2026 Kernlab-001.
 
 ## Acknowledgements
 
