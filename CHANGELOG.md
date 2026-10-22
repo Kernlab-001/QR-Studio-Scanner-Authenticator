@@ -124,5 +124,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/compare/v2.0.0...HEAD
-[2.0.0]: https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/releases/tag/v2.0.0
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.0.0

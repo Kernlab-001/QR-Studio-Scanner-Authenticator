@@ -20,7 +20,7 @@ into the project, and the bar the change has to clear.
 ## Getting set up
 
 ```bash
-git clone https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator.git
+git clone https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator.git
 cd QR-Studio-Scanner-Authenticator
 ```
 

@@ -16,7 +16,7 @@ Please **do not open a public GitHub issue** for a security problem.
 Instead, report it privately through GitHub's security advisory form:
 
 **Repository → Security → Report a vulnerability**
-<https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/security/advisories/new>
+<https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/security/advisories/new>
 
 Include, as far as you can:
 
