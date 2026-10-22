@@ -107,4 +107,4 @@ will point to the same file in the repository.
 ## Contact
 
 Questions about this policy or the extension can be raised as an issue on
-GitHub: <https://github.com/OFFICIAL-ZXKTS/QR-Studio-Scanner-Authenticator/issues>
+GitHub: <https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/issues>
