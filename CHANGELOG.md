@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.1] — 2026-10-26
+
+### Fixed
+
+- **The vault toolbar no longer overflows the popup.** With the *Bulk import*
+  button added, the row of buttons was wider than the popup, so the button ran
+  past the right edge and its Pro badge was cut off. The row now wraps.
+- The licence line in the Pro card is trimmed to one line, so the licence
+  details no longer crowd the *Remove licence* link.
+
 ## [2.3.0] — 2026-10-26
 
 ### Added
@@ -197,7 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.1...HEAD
+[2.3.1]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.1.0

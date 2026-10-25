@@ -1025,6 +1025,7 @@ function renderProState() {
     const seats = Number(state.licence.seats || 1);
     const expiry = state.licence.exp ? new Date(state.licence.exp).toISOString().slice(0, 10) : 'no expiry';
     ui.proLicenceInfo.textContent = `${state.licence.email || 'Licensed'} · ${seats} seat${seats === 1 ? '' : 's'} · until ${expiry}`;
+    ui.proLicenceInfo.title = ui.proLicenceInfo.textContent;
     ui.proNote.textContent = 'Pro is active. Bulk import and batch QR creation are unlocked.';
   } else {
     ui.proNote.textContent = 'Scanning, the authenticator and the history stay free for everyone. Pro adds bulk import from other authenticator apps and batch QR generation.';
