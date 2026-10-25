@@ -652,7 +652,7 @@ code { color: #e9d5ff; }
 
 .vault-toolbar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 11px;
 }
@@ -862,10 +862,11 @@ code { color: #e9d5ff; }
 }
 .pro-card.is-pro .pro-state { background: rgba(249, 115, 22, .18); color: var(--accent-primary-hover); }
 .pro-note { margin: 7px 0 0; color: var(--text-secondary); font-size: 10.5px; line-height: 1.45; }
-.pro-activate { display: flex; gap: 6px; margin-top: 9px; }
+.pro-activate { display: flex; align-items: center; gap: 6px; margin-top: 9px; }
 .pro-activate input {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 30px;
   padding: 6px 8px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
@@ -874,6 +875,7 @@ code { color: #e9d5ff; }
   font-family: var(--font-mono);
   font-size: 10px;
 }
+.pro-activate .secondary-button { flex: 0 0 auto; min-height: 30px; }
 .pro-card-foot {
   display: flex;
   align-items: center;
@@ -883,6 +885,8 @@ code { color: #e9d5ff; }
   color: var(--text-muted);
   font-size: 10px;
 }
+.pro-card-foot span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pro-card-foot .text-button { flex: 0 0 auto; }
 .pro-tag {
   margin-left: 5px;
   padding: 1px 5px;
