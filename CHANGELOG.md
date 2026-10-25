@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-10-26
+
 ### Added
 
 - **A second, stronger QR decoder.** The extension now ships a small WebAssembly
@@ -59,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   single squeezed line.
 - The full-page layout is shared by all four sections instead of the camera view
   only, and the standalone tab keeps a default section selected.
+
+### Security
+
+- The new WebAssembly decoder is read from the extension package. The upstream
+  build would fetch it from a public CDN, and that address is overridden, so
+  the extension still makes no network request of any kind.
 
 ## [2.0.0] — 2026-10-20
 
@@ -131,5 +139,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.0.0
