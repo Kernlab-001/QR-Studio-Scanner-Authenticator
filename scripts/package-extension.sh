@@ -42,6 +42,13 @@ if [ -d icons ]; then
     FILES+=("icons/$(basename "$icon")")
   done < <(find icons -maxdepth 1 -name '*.png' | sort)
 fi
+# The vendored browser-side libraries, including the WebAssembly decoder, are
+# shipped inside the package.
+if [ -d vendor ]; then
+  while IFS= read -r vendored; do
+    FILES+=("vendor/${vendored#vendor/}")
+  done < <(find vendor -type f | sort)
+fi
 
 for file in "${FILES[@]}"; do
   if [ ! -f "$file" ]; then
