@@ -83,6 +83,8 @@ jobs:
               echo "THIRD_PARTY_NOTICES.md does not mention $lib"; exit 1; }
           done
           test -f THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md is missing"; exit 1; }
+          test -f vendor/zxing/ZXING-WASM-LICENSE.txt || { echo "the vendored decoder licence is missing"; exit 1; }
+          grep -qi 'zxing' THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md does not mention the vendored decoder"; exit 1; }
           echo "third-party notices OK"
 
       - name: Round-trip the vendored libraries
