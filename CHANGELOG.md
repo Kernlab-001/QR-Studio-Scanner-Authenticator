@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pass, so a page that holds several codes is read in full, and a pale or
   low-contrast code that the older reader missed is now found. The module is
   loaded from the extension package and never from a network address.
+- **A support link.** The History tab and the footer of the full-page view now
+  carry a *Support development* link. It opens a static page in a new tab — the
+  extension itself still makes no request of any kind, and nothing about the
+  vault is ever passed on.
 - **Styled QR creation.** The Create tab can now set the module shape (square,
   rounded, circle, diamond), the error-correction level (L/M/Q/H), the quiet
   zone, the output size and the foreground and background colours, and export
