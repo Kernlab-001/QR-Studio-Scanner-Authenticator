@@ -837,6 +837,7 @@ code { color: #e9d5ff; }
 .style-colour input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
 .style-colour input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 5px; }
 .style-warning { margin: 0; color: var(--accent-warning); font-size: 9.5px; line-height: 1.35; }
+.style-hint { margin: 6px 0 0; color: var(--text-muted); font-size: 9.5px; line-height: 1.35; }
 
 .generated-card {
   display: grid;
