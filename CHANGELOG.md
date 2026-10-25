@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The support page is laid out at a more readable size, and the one-off tip
+  row now offers $2, $5, $10, $15, $20, $50, $100 and a custom amount.
+
 ## [2.3.1] — 2026-10-26
 
 ### Fixed
