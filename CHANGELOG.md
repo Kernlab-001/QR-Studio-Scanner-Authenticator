@@ -18,6 +18,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A public support page, served by GitHub Pages, listing the ways to support
   the project and what support pays for.
 
+### Fixed
+
+- **A 2FA secret can no longer be copied out of a multi-code frame.** When a
+  page held several codes, the extra results offered a plain *Copy* button
+  that copied the raw setup URI, shared secret included. The extra result is
+  now redacted in the same way as the main one, and it only offers *Import*.
+- **Pressing Enter in the manual authenticator form no longer reloads the
+  popup.** The form used to submit itself, which threw away everything that
+  had been typed. Enter now saves the account.
+- **The camera starts by itself.** Opening the camera tab, or pressing *Scan
+  setup QR* in the vault, switched to the camera view but never started the
+  stream, so the screen sat empty until a second click.
+- **A creator draft is no longer lost.** Switching away from the Create tab and
+  coming back rebuilt the fields from an empty draft, so the typed content
+  disappeared. The draft is now written down as you type.
+- **Setup URIs with a separated algorithm name are accepted.** `SHA-256` and
+  `SHA_512` are now understood alongside `SHA256` and `SHA512`; an unknown
+  algorithm is still refused, and the message names what was wrong.
+- **A large image with no code in it no longer freezes the popup.** The
+  multi-code sweep handed the thread back between tiles instead of running
+  every tile in one go.
+- **Styled codes are easier for other readers.** Circle and diamond modules now
+  reach slightly past their own cell, so neighbouring modules stay joined
+  instead of touching at a single point, and the creator shows a short note
+  when the quiet zone is narrower than the 4 modules most scanners expect.
+
 ## [2.1.0] — 2026-10-26
 
 ### Added

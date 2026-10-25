@@ -94,6 +94,7 @@ const ui = {
   qrForeground: $('#qrForeground'),
   qrBackground: $('#qrBackground'),
   qrContrastWarning: $('#qrContrastWarning'),
+  qrCompatibilityHint: $('#qrCompatibilityHint'),
   toast: $('#toast')
 };
 
@@ -191,6 +192,9 @@ function setScannerStatus(text, kind = 'ready') {
 
 function setView(view) {
   if (!['scan', 'vault', 'create', 'history'].includes(view)) return;
+  // The creator fields are rebuilt every time the tab is shown, so the draft
+  // is written down before it can be lost.
+  if (state.view === 'create' && view !== 'create') saveCreatorDraft(state.creatorTemplate);
   stopCamera();
   state.view = view;
   $$('.main-tab').forEach((button) => {
@@ -419,15 +423,15 @@ function tilePositions(size, tile, step) {
   return [...new Set(positions)];
 }
 
-function detectAllQRCodes(context, width, height) {
-  const found = detectInTiles(context, width, height, false);
+async function detectAllQRCodes(context, width, height) {
+  const found = await detectInTiles(context, width, height, false);
   if (found.length) return found;
   // Nothing was read, so the frame is tried again with stretched grey levels,
   // which rescues a set of pale codes.
   return detectInTiles(context, width, height, true);
 }
 
-function detectInTiles(context, width, height, stretch) {
+async function detectInTiles(context, width, height, stretch) {
   const found = [];
   const seen = new Set();
   const collect = (value) => {
@@ -436,16 +440,21 @@ function detectInTiles(context, width, height, stretch) {
     seen.add(text);
     found.push(text);
   };
-  const read = (x, y, tileWidth, tileHeight) => {
+  let passes = 0;
+  const read = async (x, y, tileWidth, tileHeight) => {
     const image = context.getImageData(x, y, tileWidth, tileHeight);
     let code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
     if (!code && stretch) {
       const stretched = stretchLevels(image);
       code = window.jsQR(stretched.data, stretched.width, stretched.height, { inversionAttempts: 'attemptBoth' });
     }
+    passes += 1;
+    // Hand the thread back between tiles. A large image with no code in it
+    // used to run every tile in one go, which froze the popup for seconds.
+    if (passes % 4 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
     return code?.data || '';
   };
-  collect(read(0, 0, width, height));
+  collect(await read(0, 0, width, height));
   // Two overlapping grids: the wider one catches the big codes, the finer one
   // separates codes that sit close to each other.
   for (const scale of MULTI_CODE_TILE_SCALES) {
@@ -455,7 +464,7 @@ function detectInTiles(context, width, height, stretch) {
     const stepY = Math.max(1, Math.round(tileHeight / 2));
     for (const y of tilePositions(height, tileHeight, stepY)) {
       for (const x of tilePositions(width, tileWidth, stepX)) {
-        collect(read(x, y, tileWidth, tileHeight));
+        collect(await read(x, y, tileWidth, tileHeight));
       }
     }
   }
@@ -730,8 +739,10 @@ function base32ToBytes(value) {
 function normaliseAccount(input, { keepId = false } = {}) {
   const type = String(input.type || 'totp').toLowerCase();
   if (!['totp', 'hotp'].includes(type)) throw new Error('Authenticator type must be TOTP or HOTP.');
-  const algorithm = String(input.algorithm || 'SHA1').toUpperCase();
-  if (!['SHA1', 'SHA256', 'SHA512'].includes(algorithm)) throw new Error('Unsupported authenticator algorithm.');
+  // Some providers write the algorithm with a separator ("SHA-256"), so the
+  // name is normalised before it is checked.
+  const algorithm = String(input.algorithm || 'SHA1').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!['SHA1', 'SHA256', 'SHA512'].includes(algorithm)) throw new Error(`Unsupported authenticator algorithm (${input.algorithm}).`);
   const issuer = String(input.issuer || 'Authenticator').trim() || 'Authenticator';
   const accountName = String(input.accountName || input.name || issuer).trim() || issuer;
   const secret = normaliseSecret(input.secret);
@@ -948,12 +959,17 @@ function renderExtraResults(rawValues) {
     } else {
       openButton.hidden = true;
     }
-    const copyButton = document.createElement('button');
-    copyButton.type = 'button';
-    copyButton.className = 'mini-button';
-    copyButton.textContent = 'Copy';
-    copyButton.addEventListener('click', () => copyText(raw));
-    actions.append(openButton, copyButton);
+    actions.append(openButton);
+    // A setup URI carries the 2FA shared secret, so it is never copied raw.
+    // The main result redacts it the same way.
+    if (result.kind !== 'authenticator') {
+      const copyButton = document.createElement('button');
+      copyButton.type = 'button';
+      copyButton.className = 'mini-button';
+      copyButton.textContent = 'Copy';
+      copyButton.addEventListener('click', () => copyText(raw));
+      actions.append(copyButton);
+    }
 
     row.append(head, value, actions);
     ui.resultListItems.append(row);
@@ -1568,19 +1584,26 @@ function makeCreatorPayload() {
 
 // The generated code can be styled: module shape, colours, quiet zone and
 // error-correction level. Everything is rendered locally on a canvas.
+// Circle and diamond modules reach slightly past their own cell so that
+// neighbouring modules stay joined. Modules that only touch at a point are
+// read by our own decoder, but some hardware scanners lose the run of dark
+// pixels and fail on them.
 function drawQrModule(context, shape, x, y, size) {
   if (shape === 'circle') {
     context.beginPath();
-    context.arc(x + size / 2, y + size / 2, size * 0.46, 0, Math.PI * 2);
+    context.arc(x + size / 2, y + size / 2, size * 0.52, 0, Math.PI * 2);
     context.fill();
     return;
   }
   if (shape === 'diamond') {
+    const centreX = x + size / 2;
+    const centreY = y + size / 2;
+    const reach = size * 0.56;
     context.beginPath();
-    context.moveTo(x + size / 2, y);
-    context.lineTo(x + size, y + size / 2);
-    context.lineTo(x + size / 2, y + size);
-    context.lineTo(x, y + size / 2);
+    context.moveTo(centreX, centreY - reach);
+    context.lineTo(centreX + reach, centreY);
+    context.lineTo(centreX, centreY + reach);
+    context.lineTo(centreX - reach, centreY);
     context.closePath();
     context.fill();
     return;
@@ -1660,9 +1683,12 @@ function buildQrSvg(qr, style, moduleSize) {
       const y = (row + style.margin) * moduleSize;
       const shape = keepsSquare(qr, row, column, cells, alignment) ? 'square' : style.shape;
       if (shape === 'circle') {
-        parts.push(`<circle cx="${x + moduleSize / 2}" cy="${y + moduleSize / 2}" r="${moduleSize * 0.46}"/>`);
+        parts.push(`<circle cx="${x + moduleSize / 2}" cy="${y + moduleSize / 2}" r="${moduleSize * 0.52}"/>`);
       } else if (shape === 'diamond') {
-        parts.push(`<polygon points="${x + moduleSize / 2},${y} ${x + moduleSize},${y + moduleSize / 2} ${x + moduleSize / 2},${y + moduleSize} ${x},${y + moduleSize / 2}"/>`);
+        const centreX = x + moduleSize / 2;
+        const centreY = y + moduleSize / 2;
+        const reach = moduleSize * 0.56;
+        parts.push(`<polygon points="${centreX},${centreY - reach} ${centreX + reach},${centreY} ${centreX},${centreY + reach} ${centreX - reach},${centreY}"/>`);
       } else {
         const radius = shape === 'rounded' ? moduleSize * 0.32 : 0;
         parts.push(`<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}"${radius ? ` rx="${radius}"` : ''}/>`);
@@ -1700,6 +1726,17 @@ function updateContrastWarning() {
   return ratio;
 }
 
+// A code with no quiet zone, or with modules that only meet at their
+// corners, is still generated - the user is simply told what to change.
+function updateCompatibilityHint() {
+  const style = state.creatorStyle;
+  const notes = [];
+  if (style.margin < 4) notes.push(`A quiet zone of ${style.margin} module${style.margin === 1 ? '' : 's'} is below the 4 modules most scanners expect.`);
+  if (style.shape === 'circle' || style.shape === 'diamond') notes.push(`${style.shape === 'circle' ? 'Circle' : 'Diamond'} modules are decorative - use rounded or square for a hardware scanner.`);
+  ui.qrCompatibilityHint.hidden = !notes.length;
+  if (notes.length) ui.qrCompatibilityHint.textContent = notes.join(' ');
+}
+
 function generateQr({ silent = false } = {}) {
   try {
     const payload = makeCreatorPayload();
@@ -1719,6 +1756,7 @@ function generateQr({ silent = false } = {}) {
     ui.createPlaceholder.hidden = true;
     ui.createPlaceholderText.textContent = 'Enter content above to preview QR';
     updateContrastWarning();
+    updateCompatibilityHint();
     if (!silent) showToast('QR code generated locally.');
   } catch (error) {
     if (silent) {
@@ -1861,11 +1899,24 @@ function bindEvents() {
       if (text) ui.pasteInput.value = text;
     }
   });
-  $('#scanAuthenticator').addEventListener('click', () => { setView('scan'); setIntent('auth'); setSource('camera'); });
+  $('#scanAuthenticator').addEventListener('click', () => {
+    setView('scan');
+    setIntent('auth');
+    setSource('camera');
+    // The button says "Scan setup QR", so the camera has to come up straight
+    // away instead of waiting for a second click.
+    startCamera();
+  });
   $('#showManualForm').addEventListener('click', openManualForm);
   $('#hideManualForm').addEventListener('click', closeManualForm);
   $('#parseManualUri').addEventListener('click', parseManualUri);
   $('#saveManualAccount').addEventListener('click', saveManualAccount);
+  // Pressing Enter inside the manual form used to submit it, which reloaded
+  // the popup and threw away everything that had been typed.
+  ui.manualForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    saveManualAccount();
+  });
   ui.manualType.addEventListener('change', updateCounterVisibility);
   ui.vaultSearch.addEventListener('input', renderAccounts);
   ui.clearVaultSearch.addEventListener('click', () => { ui.vaultSearch.value = ''; renderAccounts(); });
@@ -1890,7 +1941,12 @@ function bindEvents() {
   // are rebuilt every time the Create tab is shown.
   document.addEventListener('input', (event) => {
     const target = event.target;
-    if (target && typeof target.closest === 'function' && target.closest('#creatorFields')) scheduleLiveQr();
+    if (!target || typeof target.closest !== 'function') return;
+    if (!target.closest('#creatorFields')) return;
+    // Keep the draft as it is typed, so switching tabs and coming back does
+    // not throw it away.
+    saveCreatorDraft(state.creatorTemplate);
+    scheduleLiveQr();
   });
   $('#generateQr').addEventListener('click', () => generateQr());
   $('#copyGenerated').addEventListener('click', () => state.generatedPayload && copyText(state.generatedPayload));
@@ -1903,11 +1959,16 @@ function bindEvents() {
       state.creatorStyle[group] = button.dataset.value;
       $$(`[data-style="${group}"]`).forEach((item) => item.classList.toggle('active', item === button));
       updateContrastWarning();
+      updateCompatibilityHint();
       scheduleLiveQr();
     });
   });
   ui.qrSize.addEventListener('change', () => { state.creatorStyle.size = Number(ui.qrSize.value); });
-  ui.qrMargin.addEventListener('change', () => { state.creatorStyle.margin = Number(ui.qrMargin.value); scheduleLiveQr(); });
+  ui.qrMargin.addEventListener('change', () => {
+    state.creatorStyle.margin = Number(ui.qrMargin.value);
+    updateCompatibilityHint();
+    scheduleLiveQr();
+  });
   ui.qrForeground.addEventListener('input', () => {
     state.creatorStyle.foreground = ui.qrForeground.value;
     updateContrastWarning();
@@ -1951,6 +2012,9 @@ if (pageParams.has('camera') || pageParams.has('view')) {
 if (pageParams.has('camera')) {
   setView('scan');
   setSource('camera');
+  // This tab is opened from the "full screen scanner" button, so the camera
+  // starts on its own instead of waiting for a click.
+  startCamera();
 } else if (pageParams.has('view')) {
   const requestedView = pageParams.get('view');
   if (['scan', 'vault', 'create', 'history'].includes(requestedView)) setView(requestedView);
