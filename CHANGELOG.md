@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-10-26
+
+### Added
+
+- **QR Studio Pro.** A paid tier that adds two things the free extension does
+  not have:
+  - **Bulk import.** A Google Authenticator export code, a 2FAS export file or
+    a plain list of setup URIs can be read in one go, and every account is
+    imported at once — with its algorithm, digit count, period and HOTP
+    counter intact. The export is parsed on the device and is never shown,
+    because it carries every secret.
+  - **Batch QR creation.** One payload per line becomes one PNG per line, and
+    the whole set is packed into a single ZIP, built locally.
+- The free extension keeps everything it had: scanning, the authenticator
+  vault, the history and single QR creation are unchanged and stay free for
+  everyone.
+- **The licence is checked offline.** A licence is signed by the project key
+  and verified in the browser with the public key alone, so activating Pro
+  needs no account, no sign-in and no network request of any kind. The
+  extension still never talks to a server.
+
 ## [2.2.0] — 2026-10-26
 
 ### Added
@@ -176,7 +197,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.0.0

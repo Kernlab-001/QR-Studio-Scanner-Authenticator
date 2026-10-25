@@ -28,6 +28,8 @@ const state = {
   generatedPayload: '',
   creatorTemplate: 'text',
   creatorStyle: { ecl: 'M', shape: 'square', foreground: '#090d1c', background: '#ffffff', margin: 0, size: 512 },
+  creatorMode: 'single',
+  licence: null,
   toastTimer: null
 };
 
@@ -95,6 +97,20 @@ const ui = {
   qrBackground: $('#qrBackground'),
   qrContrastWarning: $('#qrContrastWarning'),
   qrCompatibilityHint: $('#qrCompatibilityHint'),
+  proCard: $('#proCard'),
+  proState: $('#proState'),
+  proNote: $('#proNote'),
+  proActivate: $('#proActivate'),
+  proCardFoot: $('#proCardFoot'),
+  proLicenceInfo: $('#proLicenceInfo'),
+  licenceInput: $('#licenceInput'),
+  bulkImport: $('#bulkImport'),
+  bulkImportPanel: $('#bulkImportPanel'),
+  bulkImportText: $('#bulkImportText'),
+  bulkImportWarning: $('#bulkImportWarning'),
+  bulkImportInput: $('#bulkImportInput'),
+  batchPanel: $('#batchPanel'),
+  batchInput: $('#batchInput'),
   toast: $('#toast')
 };
 
@@ -802,6 +818,11 @@ function redactOtpUri(rawValue) {
   return String(rawValue).replace(/([?&]secret=)[^&]*/i, '$1••••');
 }
 
+// A migration code carries every secret in one blob, so it is redacted too.
+function redactMigrationUri(rawValue) {
+  return String(rawValue).replace(/([?&]data=)[^&]*/i, '$1••••');
+}
+
 function isIpHost(hostname) {
   return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) || hostname.includes(':');
 }
@@ -833,6 +854,7 @@ function parseWifiPayload(rawValue) {
 function classifyPayload(rawValue) {
   const raw = String(rawValue);
   const trimmed = raw.trim();
+  if (/^otpauth-migration:\/\//i.test(trimmed)) return { kind: 'migration', type: 'MIGRATION', label: 'Authenticator export', description: 'This QR holds a set of authenticator accounts.', value: redactMigrationUri(trimmed) };
   if (/^otpauth:\/\//i.test(trimmed)) return { kind: 'authenticator', type: 'AUTHENTICATOR', label: 'Authenticator setup', description: 'This QR contains a 2FA secret. It is not stored in scan history.', value: redactOtpUri(raw) };
   if (/^WIFI:/i.test(trimmed)) {
     const wifi = parseWifiPayload(trimmed);
@@ -976,6 +998,167 @@ function renderExtraResults(rawValues) {
   });
 }
 
+/* ------------------------------------------------------------------ pro */
+
+// The licence is checked offline, so the free features never depend on a
+// server and the paid ones unlock without a sign-in.
+function isPro() {
+  return Boolean(state.licence);
+}
+
+async function refreshLicence() {
+  try {
+    state.licence = (await window.QRStudioLicence?.read()) || null;
+  } catch {
+    state.licence = null;
+  }
+  renderProState();
+}
+
+function renderProState() {
+  const pro = isPro();
+  ui.proCard.classList.toggle('is-pro', pro);
+  ui.proState.textContent = pro ? 'Pro' : 'Free';
+  ui.proActivate.hidden = pro;
+  ui.proCardFoot.hidden = !pro;
+  if (pro) {
+    const seats = Number(state.licence.seats || 1);
+    const expiry = state.licence.exp ? new Date(state.licence.exp).toISOString().slice(0, 10) : 'no expiry';
+    ui.proLicenceInfo.textContent = `${state.licence.email || 'Licensed'} · ${seats} seat${seats === 1 ? '' : 's'} · until ${expiry}`;
+    ui.proNote.textContent = 'Pro is active. Bulk import and batch QR creation are unlocked.';
+  } else {
+    ui.proNote.textContent = 'Scanning, the authenticator and the history stay free for everyone. Pro adds bulk import from other authenticator apps and batch QR generation.';
+  }
+  $$('[data-pro-feature]').forEach((button) => {
+    button.classList.toggle('pro-locked', !pro);
+    button.title = pro ? '' : 'This is a QR Studio Pro feature.';
+  });
+  if (!pro) {
+    ui.bulkImportPanel.hidden = true;
+    if (state.creatorMode === 'batch') setCreatorMode('single');
+  }
+}
+
+async function activateLicence() {
+  const key = ui.licenceInput.value.trim();
+  if (!key) {
+    showToast('Paste a licence key first.', 'error');
+    return;
+  }
+  const result = await window.QRStudioLicence.save(key);
+  if (!result.ok) {
+    showToast(result.reason, 'error');
+    return;
+  }
+  state.licence = result.payload;
+  ui.licenceInput.value = '';
+  renderProState();
+  showToast('QR Studio Pro is active.');
+}
+
+async function removeLicence() {
+  await window.QRStudioLicence.clear();
+  state.licence = null;
+  renderProState();
+  showToast('Licence removed. The free features are unchanged.');
+}
+
+function openBulkImport() {
+  if (!isPro()) {
+    showToast('Bulk import is a QR Studio Pro feature.', 'error');
+    return;
+  }
+  ui.bulkImportPanel.hidden = false;
+  ui.bulkImportText.focus();
+}
+
+async function importAccounts(accounts) {
+  let added = 0;
+  let skipped = 0;
+  for (const candidate of accounts) {
+    try {
+      const account = normaliseAccount(candidate);
+      const duplicate = state.accounts.find((item) => item.secret === account.secret && item.issuer === account.issuer && item.accountName === account.accountName);
+      if (duplicate) {
+        skipped += 1;
+        continue;
+      }
+      state.accounts.push(account);
+      added += 1;
+    } catch {
+      skipped += 1;
+    }
+  }
+  await saveAccounts();
+  renderAccounts();
+  return { added, skipped };
+}
+
+async function runBulkImport(text) {
+  try {
+    const accounts = window.QRStudioPro.parseImport(text);
+    const preview = accounts.slice(0, 6).map((account) => `${account.issuer} · ${account.accountName}`).join('\n');
+    const more = accounts.length > 6 ? `\n…and ${accounts.length - 6} more` : '';
+    if (!confirm(`Import ${accounts.length} authenticator${accounts.length === 1 ? '' : 's'}?\n\n${preview}${more}\n\nThey are stored on this device only.`)) return;
+    const result = await importAccounts(accounts);
+    ui.bulkImportWarning.textContent = '';
+    ui.bulkImportText.value = '';
+    showToast(`Imported ${result.added} authenticator${result.added === 1 ? '' : 's'}${result.skipped ? `, skipped ${result.skipped} already here` : ''}.`);
+  } catch (error) {
+    ui.bulkImportWarning.textContent = error.message;
+  }
+}
+
+function setCreatorMode(mode) {
+  if (mode === 'batch' && !isPro()) {
+    showToast('Batch creation is a QR Studio Pro feature.', 'error');
+    return;
+  }
+  state.creatorMode = mode;
+  $$('.mode-button').forEach((button) => button.classList.toggle('active', button.dataset.mode === mode));
+  const batch = mode === 'batch';
+  ui.batchPanel.hidden = !batch;
+  ui.creatorFields.hidden = batch;
+  ui.createTemplate.hidden = batch;
+  $('.create-template-label').hidden = batch;
+  $('#generateQr').hidden = batch;
+  if (!batch) scheduleLiveQr();
+}
+
+async function generateBatchCodes() {
+  if (!isPro()) {
+    showToast('Batch creation is a QR Studio Pro feature.', 'error');
+    return;
+  }
+  const lines = ui.batchInput.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) {
+    showToast('Add at least one payload.', 'error');
+    return;
+  }
+  try {
+    const style = state.creatorStyle;
+    const files = [];
+    for (let index = 0; index < lines.length; index += 1) {
+      const qr = buildQr(lines[index], style);
+      const modules = qr.getModuleCount() + style.margin * 2;
+      const dimension = Math.max(modules, Math.round((style.size || 512) / modules) * modules);
+      const canvas = document.createElement('canvas');
+      canvas.width = dimension;
+      canvas.height = dimension;
+      const context = canvas.getContext('2d');
+      drawQrMatrix(context, qr, style, dimension / modules);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      const buffer = new Uint8Array(await blob.arrayBuffer());
+      files.push({ name: window.QRStudioPro.safeFileName(lines[index], index), data: buffer });
+    }
+    const zip = window.QRStudioPro.createZip(files);
+    downloadBlob(zip, `qr-studio-batch-${new Date().toISOString().slice(0, 10)}.zip`);
+    showToast(`${files.length} QR code${files.length === 1 ? '' : 's'} created and packed into a ZIP.`);
+  } catch (error) {
+    showToast(`Batch creation failed: ${error.message}`, 'error');
+  }
+}
+
 function openExternal(url) {
   try {
     chrome.tabs.create({ url }).catch(() => window.open(url, '_blank', 'noopener,noreferrer'));
@@ -991,6 +1174,25 @@ async function handleScannedValue(rawValue, { source = 'scanner', extra = [] } =
   const result = classifyPayload(raw);
   state.currentResult = { raw, ...result, source, scannedAt: Date.now() };
   ui.stage.classList.add('is-locked');
+
+  if (result.kind === 'migration') {
+    showResult({
+      type: 'MIGRATION',
+      label: 'Authenticator export',
+      description: 'This QR holds a set of authenticator accounts that can be imported in one go. The export itself is never shown, because it carries every secret.',
+      value: result.value,
+      actions: [action('Import the accounts', () => {
+        if (!isPro()) {
+          showToast('Bulk import is a QR Studio Pro feature.', 'error');
+          return;
+        }
+        runBulkImport(raw);
+      })]
+    });
+    setScannerStatus('Export found');
+    renderExtraResults(extra);
+    return;
+  }
 
   if (result.kind === 'authenticator') {
     try {
@@ -1907,6 +2109,21 @@ function bindEvents() {
     // away instead of waiting for a second click.
     startCamera();
   });
+  $('#activateLicence').addEventListener('click', activateLicence);
+  $('#removeLicence').addEventListener('click', removeLicence);
+  $('#bulkImport').addEventListener('click', openBulkImport);
+  $('#closeBulkImport').addEventListener('click', () => { ui.bulkImportPanel.hidden = true; });
+  $('#bulkImportPaste').addEventListener('click', () => runBulkImport(ui.bulkImportText.value));
+  $('#bulkImportFile').addEventListener('click', () => ui.bulkImportInput.click());
+  ui.bulkImportInput.addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    ui.bulkImportText.value = text;
+    await runBulkImport(text);
+  });
+  $$('.mode-button').forEach((button) => button.addEventListener('click', () => setCreatorMode(button.dataset.mode)));
+  $('#generateBatch').addEventListener('click', generateBatchCodes);
   $('#showManualForm').addEventListener('click', openManualForm);
   $('#hideManualForm').addEventListener('click', closeManualForm);
   $('#parseManualUri').addEventListener('click', parseManualUri);
@@ -1996,6 +2213,8 @@ setInterval(() => state.accountUpdaters.forEach((update) => update()), 1000);
 bindEvents();
 setSource('tab');
 renderCreatorFields();
+renderProState();
+refreshLicence();
 loadState().catch((error) => showToast(`Could not load saved data: ${error.message}`, 'error'));
 
 // The enhanced decoder is prepared in the background, so the first scan does

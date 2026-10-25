@@ -1,7 +1,7 @@
 # Privacy Policy — QR Studio
 
 **Last updated:** 26 October 2026
-**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.2.0
+**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.3.0
 
 ## Summary
 
@@ -23,6 +23,7 @@ exactly two categories:
 |---|---|---|---|
 | **Authentication information** | The TOTP/HOTP secret, issuer, account name, algorithm, digits, period and counter of each authenticator you save in the vault | **App functionality** — generating your rotating codes | `chrome.storage.local` on your device. Never transmitted. |
 | **User activity** | The QR payloads you scan, when you turn on "Save general QR scans on this device" (off by default) | **App functionality** — showing your own scan history | `chrome.storage.local` on your device. Never transmitted. |
+| **Purchase information** | If you buy a Pro licence: the licence key you paste in, and the email address inside it | **App functionality** — proving that the paid features are unlocked | `chrome.storage.local` on your device. Never transmitted. |
 
 No other data category is handled. Nothing is collected automatically, nothing
 is sent anywhere, and no developer or third party can read it.
@@ -53,6 +54,33 @@ explicit click you make:
 1. capturing the **visible tab** as an image when you choose the *Tab* scan
    source, so the QR code on screen can be decoded;
 2. opening a result link or the full-screen camera page in a new tab.
+
+## Paid features
+
+QR Studio has a paid tier, **QR Studio Pro**. The store listing says so
+plainly, and this policy explains what it changes.
+
+**What stays free, for everyone, with no account and no limit:** scanning from
+the camera, an image, the current tab or pasted content; the authenticator
+vault with TOTP and HOTP; encrypted backup and restore; the local scan history;
+and creating a single QR code with the full styling options.
+
+**What Pro adds:** bulk import from other authenticator apps, and batch QR
+creation. Both run entirely on your device.
+
+**How the licence is checked, and what that means for your privacy:**
+
+- A licence key is signed by the project key and verified inside the extension
+  with the **public key only**. The check happens locally, so **activating Pro
+  makes no network request and the extension still never contacts a server.**
+- There is no account, no sign-in, no device registration and no telemetry.
+  The extension cannot tell whether you have a licence beyond what is on your
+  own screen.
+- The licence key, and the email address inside it, are stored in
+  `chrome.storage.local` on your device and are never transmitted.
+- Payment itself happens on the payment provider's own website, which is
+  opened by you. The extension is not involved in the payment and never sees
+  your card details.
 
 ## Links to other pages
 
