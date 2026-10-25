@@ -306,6 +306,77 @@ function drawToProcessingCanvas(source, maxDimension = 1400) {
   return true;
 }
 
+// The enhanced decoder is a WebAssembly build of ZXing that reads every code
+// in a frame in one pass, so it also picks up pale codes and frames that hold
+// several codes. It is always read from this extension package, never from a
+// network.
+const zxing = { status: 'idle', api: null };
+
+function zxingAssetUrl(file) {
+  if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) return chrome.runtime.getURL(`vendor/zxing/${file}`);
+  return `vendor/zxing/${file}`;
+}
+
+async function ensureZxing() {
+  if (zxing.status === 'ready' || zxing.status === 'failed') return zxing.api;
+  const api = window.ZXingWASM;
+  if (!api || typeof api.readBarcodes !== 'function' || typeof api.prepareZXingModule !== 'function') {
+    zxing.status = 'failed';
+    return null;
+  }
+  zxing.status = 'loading';
+  try {
+    await api.prepareZXingModule({ overrides: { locateFile: (file) => zxingAssetUrl(file) } });
+    zxing.api = api;
+    zxing.status = 'ready';
+  } catch (error) {
+    console.info('Enhanced QR decoder unavailable; using the bundled fallback.', error);
+    zxing.api = null;
+    zxing.status = 'failed';
+  }
+  return zxing.api;
+}
+
+// A pale code can be invisible to the bundled reader, so the grey levels are
+// stretched across the full range before a second attempt.
+function stretchLevels(image) {
+  const { data, width, height } = image;
+  let min = 255;
+  let max = 0;
+  for (let index = 0; index < data.length; index += 4) {
+    const luma = (data[index] * 299 + data[index + 1] * 587 + data[index + 2] * 114) / 1000;
+    if (luma < min) min = luma;
+    if (luma > max) max = luma;
+  }
+  const range = Math.max(1, max - min);
+  const stretched = new Uint8ClampedArray(data.length);
+  for (let index = 0; index < data.length; index += 4) {
+    const luma = (data[index] * 299 + data[index + 1] * 587 + data[index + 2] * 114) / 1000;
+    const value = ((luma - min) / range) * 255;
+    stretched[index] = value;
+    stretched[index + 1] = value;
+    stretched[index + 2] = value;
+    stretched[index + 3] = 255;
+  }
+  return new ImageData(stretched, width, height);
+}
+
+async function decodeWithZxing(source) {
+  const api = await ensureZxing();
+  if (!api) return [];
+  if (!drawToProcessingCanvas(source, 1600)) return [];
+  const context = ui.processCanvas.getContext('2d', { willReadFrequently: true });
+  const { width, height } = ui.processCanvas;
+  const image = context.getImageData(0, 0, width, height);
+  try {
+    const results = await api.readBarcodes(image, { formats: ['QRCode'], tryHarder: true });
+    return results.map((result) => String(result.text || '').trim()).filter(Boolean);
+  } catch (error) {
+    console.info('Enhanced QR decoder failed; using the bundled fallback.', error);
+    return [];
+  }
+}
+
 async function decodeSource(source, { multi = false } = {}) {
   const nativeDetector = await getNativeDetector();
   if (nativeDetector) {
@@ -317,13 +388,19 @@ async function decodeSource(source, { multi = false } = {}) {
       state.nativeDetector = null;
     }
   }
+  const enhanced = await decodeWithZxing(source);
+  if (enhanced.length) return multi ? enhanced : [enhanced[0]];
   if (typeof window.jsQR !== 'function') throw new Error('The bundled QR decoder did not load. Reload the extension from chrome://extensions.');
   if (!drawToProcessingCanvas(source, multi ? 1600 : 1400)) return [];
   const context = ui.processCanvas.getContext('2d', { willReadFrequently: true });
   const { width, height } = ui.processCanvas;
   if (!multi) {
     const image = context.getImageData(0, 0, width, height);
-    const code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+    let code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+    if (!code) {
+      const stretched = stretchLevels(image);
+      code = window.jsQR(stretched.data, stretched.width, stretched.height, { inversionAttempts: 'attemptBoth' });
+    }
     return code?.data ? [code.data] : [];
   }
   return detectAllQRCodes(context, width, height);
@@ -343,6 +420,14 @@ function tilePositions(size, tile, step) {
 }
 
 function detectAllQRCodes(context, width, height) {
+  const found = detectInTiles(context, width, height, false);
+  if (found.length) return found;
+  // Nothing was read, so the frame is tried again with stretched grey levels,
+  // which rescues a set of pale codes.
+  return detectInTiles(context, width, height, true);
+}
+
+function detectInTiles(context, width, height, stretch) {
   const found = [];
   const seen = new Set();
   const collect = (value) => {
@@ -353,7 +438,11 @@ function detectAllQRCodes(context, width, height) {
   };
   const read = (x, y, tileWidth, tileHeight) => {
     const image = context.getImageData(x, y, tileWidth, tileHeight);
-    const code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+    let code = window.jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+    if (!code && stretch) {
+      const stretched = stretchLevels(image);
+      code = window.jsQR(stretched.data, stretched.width, stretched.height, { inversionAttempts: 'attemptBoth' });
+    }
     return code?.data || '';
   };
   collect(read(0, 0, width, height));
@@ -1837,6 +1926,11 @@ bindEvents();
 setSource('tab');
 renderCreatorFields();
 loadState().catch((error) => showToast(`Could not load saved data: ${error.message}`, 'error'));
+
+// The enhanced decoder is prepared in the background, so the first scan does
+// not have to wait for the WebAssembly module to start.
+if (typeof requestIdleCallback === 'function') requestIdleCallback(() => ensureZxing());
+else setTimeout(() => ensureZxing(), 1200);
 
 // Opened as its own tab (from the popup) the extension uses the wide, centred
 // layout and the section switcher stays available.

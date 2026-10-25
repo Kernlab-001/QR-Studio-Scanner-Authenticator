@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A second, stronger QR decoder.** The extension now ships a small WebAssembly
+  build of ZXing next to the bundled reader. It reads every code in a frame in one
+  pass, so a page that holds several codes is read in full, and a pale or
+  low-contrast code that the older reader missed is now found. The module is
+  loaded from the extension package and never from a network address.
 - **Styled QR creation.** The Create tab can now set the module shape (square,
   rounded, circle, diamond), the error-correction level (L/M/Q/H), the quiet
   zone, the output size and the foreground and background colours, and export
@@ -36,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-code recognition sweeps two overlapping tile grids and decodes the frame
   at full resolution, so codes that sit close together — and coloured or
   low-contrast codes — are read as well.
+- A pale code that the bundled reader could not see is now found: the grey levels
+  are stretched across the full range before a second attempt.
 - The camera framing reticle no longer draws over the paste box — it belongs to
   the camera source only.
 - The status pill no longer overlaps the paste field.
