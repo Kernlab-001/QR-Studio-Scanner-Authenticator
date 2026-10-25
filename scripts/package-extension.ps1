@@ -56,6 +56,16 @@ try {
         $files += Get-ChildItem $iconDir -Filter "*.png" | ForEach-Object { "icons/$($_.Name)" }
     }
 
+    # The vendored browser-side libraries, including the WebAssembly decoder,
+    # are shipped inside the package.
+    $vendorDir = Join-Path $root "vendor"
+    if (Test-Path $vendorDir) {
+        $files += Get-ChildItem $vendorDir -Recurse -File | ForEach-Object {
+            $relative = $_.FullName.Substring($vendorDir.Length + 1) -replace "\\", "/"
+            "vendor/$relative"
+        }
+    }
+
     $missing = $files | Where-Object { -not (Test-Path (Join-Path $root $_)) }
     if ($missing) {
         throw "Missing expected file(s): $($missing -join ', ')"
