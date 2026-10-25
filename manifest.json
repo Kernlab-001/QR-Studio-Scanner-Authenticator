@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "QR Studio — Scanner & Authenticator",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A local QR scanner, creator, history tool, and offline authenticator vault.",
   "permissions": ["storage", "activeTab"],
   "content_security_policy": {

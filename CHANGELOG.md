@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-10-26
+
+### Added
+
+- **A support link.** The History tab and the footer of the full-page view now
+  carry a *Support development* link. It opens a static page in a new tab — the
+  extension itself still makes no request of any kind, and nothing about the
+  vault is ever passed on.
+- A public support page, served by GitHub Pages, listing the ways to support
+  the project and what support pays for.
+
 ## [2.1.0] — 2026-10-26
 
 ### Added
@@ -16,10 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pass, so a page that holds several codes is read in full, and a pale or
   low-contrast code that the older reader missed is now found. The module is
   loaded from the extension package and never from a network address.
-- **A support link.** The History tab and the footer of the full-page view now
-  carry a *Support development* link. It opens a static page in a new tab — the
-  extension itself still makes no request of any kind, and nothing about the
-  vault is ever passed on.
 - **Styled QR creation.** The Create tab can now set the module shape (square,
   rounded, circle, diamond), the error-correction level (L/M/Q/H), the quiet
   zone, the output size and the foreground and background colours, and export
@@ -143,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.1.0...HEAD
-[2.1.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.0.0...v2.1.0
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases/tag/v2.0.0
