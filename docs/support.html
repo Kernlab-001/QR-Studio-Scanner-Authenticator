@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Support QR Studio</title>
+    <meta name="description" content="QR Studio is a free, local-only QR scanner and authenticator. Support the project if it saved you time.">
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #f4f7ff;
+        --muted: #9ca9c5;
+        --faint: #6c7895;
+        --line: rgba(169, 185, 228, .15);
+        --page: #080d1d;
+        --panel: #121a33;
+        --blue: #45beff;
+        --violet: #9b7bff;
+        --mint: #63e2b0;
+        --amber: #ffb84d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 48px 20px 80px;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse 70% 28% at 91% -4%, rgba(100, 89, 244, .38), transparent 72%),
+          radial-gradient(ellipse 50% 27% at -10% 47%, rgba(35, 157, 220, .14), transparent 70%),
+          var(--page);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.62;
+      }
+      main { max-width: 820px; margin: 0 auto; }
+      header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+      .mark {
+        position: relative;
+        width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px;
+        background: linear-gradient(135deg, var(--blue), var(--violet));
+        box-shadow: 0 8px 20px rgba(76, 134, 255, .22);
+      }
+      .mark::before, .mark::after {
+        position: absolute; display: block; content: ""; background: #0a1130;
+      }
+      .mark::before { width: 9px; height: 9px; top: 7px; left: 7px; box-shadow: 12px 0 #0a1130, 0 12px #0a1130; }
+      .mark::after { width: 4px; height: 4px; right: 7px; bottom: 7px; box-shadow: -6px 0 #0a1130, 0 -6px #0a1130; }
+      .eyebrow { margin: 0 0 2px; color: var(--blue); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+      h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: -.03em; }
+      .meta { margin: 0 0 34px; color: var(--faint); font-size: 13px; }
+      h2 {
+        margin: 40px 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line);
+        font-size: 19px; letter-spacing: -.02em;
+      }
+      p, li { color: var(--muted); font-size: 15px; }
+      strong { color: var(--ink); }
+      ul, ol { padding-left: 22px; }
+      li { margin-bottom: 7px; }
+      .summary {
+        margin: 0 0 30px; padding: 18px 20px; border: 1px solid rgba(99, 226, 176, .26);
+        border-radius: 14px; background: rgba(99, 226, 176, .07);
+      }
+      .summary p { margin: 0; color: #dff6ec; font-size: 16px; }
+      .card {
+        margin: 26px 0 0; padding: 18px 20px; border: 1px solid var(--line);
+        border-radius: 14px; background: rgba(18, 26, 51, .8);
+      }
+      .card h2 { margin-top: 0; border: 0; padding-bottom: 0; }
+      .card p:last-child { margin-bottom: 0; }
+      a { color: var(--blue); }
+      .foot { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+      .foot a { color: var(--muted); }
+
+      /* support options */
+      .options { display: grid; gap: 14px; margin: 22px 0 0; }
+      .option {
+        display: block; padding: 18px 20px; border: 1px solid var(--line);
+        border-radius: 14px; background: rgba(18, 26, 51, .8); text-decoration: none;
+        transition: border-color .15s ease, transform .15s ease;
+      }
+      .option:hover { border-color: rgba(69, 190, 255, .5); transform: translateY(-1px); }
+      .option b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 3px; }
+      .option span { display: block; color: var(--muted); font-size: 14px; }
+      .option .tag {
+        display: inline-block; margin-bottom: 9px; padding: 3px 9px; border-radius: 999px;
+        color: var(--mint); background: rgba(99, 226, 176, .12); font-size: 11px; font-weight: 700;
+        letter-spacing: .06em; text-transform: uppercase;
+      }
+      .option.primary { border-color: rgba(255, 184, 77, .34); background: rgba(255, 184, 77, .07); }
+      .option.primary .tag { color: var(--amber); background: rgba(255, 184, 77, .14); }
+      .option.pending { opacity: .72; }
+      .option.pending .tag { color: var(--faint); background: rgba(108, 120, 149, .14); }
+      code {
+        padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px;
+        color: #d1c1ff; background: rgba(4, 9, 24, .5);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px;
+      }
+      @media (max-width: 560px) {
+        body { padding: 32px 16px 56px; }
+        h1 { font-size: 25px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <p class="eyebrow">LOCAL-ONLY TOOLKIT</p>
+          <h1>Support QR Studio</h1>
+        </div>
+      </header>
+      <p class="meta">Free forever · MIT licensed · no tracking, no cloud, no account</p>
+
+      <div class="summary">
+        <p>QR Studio never sends anything anywhere: every code you scan, every
+        secret in your vault and every scan in your history stays on your
+        device. It is free, open source and has no ads and no upsells. If it
+        saved you a bit of time, you can chip in and keep it that way.</p>
+      </div>
+
+      <h2>Ways to support the project</h2>
+      <div class="options">
+        <!--
+          EDIT THESE LINKS
+          1. GitHub Sponsors: enable Sponsors on the Kernlab-001 account
+             (https://github.com/sponsors/Kernlab-001 works once it is on).
+          2. The one-time payment option is created on a checkout provider
+             (Lemon Squeezy, Paddle, Gumroad or Razorpay) and its URL pasted
+             into the href below.
+          Anything you do not offer yet can stay marked "coming soon".
+        -->
+        <a class="option primary" href="https://github.com/sponsors/Kernlab-001" target="_blank" rel="noopener noreferrer">
+          <span class="tag">Monthly</span>
+          <b>Sponsor on GitHub</b>
+          <span>Any amount, cancel whenever you like. GitHub handles the payment
+          and the receipt — I never see your card details.</span>
+        </a>
+
+        <a class="option" href="https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/releases" target="_blank" rel="noopener noreferrer">
+          <span class="tag">One-time</span>
+          <b>Buy the Pro licence</b>
+          <span>One payment, no subscription, no account. It unlocks bulk
+          vault import and export, batch QR generation and scheduled encrypted
+          backups. Scanning and the authenticator stay free for everyone, and
+          the licence is verified offline, so the extension never contacts a
+          server.</span>
+        </a>
+
+        <a class="option" href="https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator" target="_blank" rel="noopener noreferrer">
+          <span class="tag">Free</span>
+          <b>Star the repository and share it</b>
+          <span>Useful for exactly the same reason a donation is: more people
+          using a local-only scanner keeps the good version the popular one.</span>
+        </a>
+      </div>
+
+      <h2>What your support pays for</h2>
+      <ul>
+        <li>Keeping the extension free of ads, telemetry and dark patterns.</li>
+        <li>More browsers: Edge and Firefox submissions, and a build that works
+        on phones and tablets.</li>
+        <li>Improvements to the parts that matter — a better decoder, faster
+        scanning, more import formats.</li>
+        <li>Team and self-hosted features for people who want a shared vault,
+        priced per seat.</li>
+      </ul>
+
+      <h2>What it will never be used for</h2>
+      <p>There is no plan to add analytics, ad targeting, a login or a
+      subscription to the core features. If a future version of QR Studio ever
+      did any of those, it would be a different product — and the source of
+      this one stays open so you can check.</p>
+
+      <div class="foot">
+        <p>QR Studio — Scanner &amp; Authenticator.
+        <a href="https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator">Source code</a> ·
+        <a href="https://kernlab-001.github.io/QR-Studio-Scanner-Authenticator/">Privacy policy</a> ·
+        MIT licensed.</p>
+      </div>
+    </main>
+  </body>
+</html>

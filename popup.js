@@ -1918,6 +1918,16 @@ function bindEvents() {
     updateContrastWarning();
     scheduleLiveQr();
   });
+  // The support link is the only way out of the extension. It opens a page in
+  // a new tab; the extension itself still makes no request of any kind.
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!target || typeof target.closest !== 'function') return;
+    const link = target.closest('[data-support-link]');
+    if (!link) return;
+    event.preventDefault();
+    openExternal(link.href);
+  });
   window.addEventListener('unload', stopCamera);
 }
 

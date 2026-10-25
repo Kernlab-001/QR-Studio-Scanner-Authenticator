@@ -156,6 +156,22 @@
         <li>opening a result link or the full-screen camera page in a new tab.</li>
       </ol>
 
+      <h2>Links to other pages</h2>
+      <p>The extension contains <strong>one</strong> link that leaves the extension: a
+      <em>Support development</em> link in the History tab and in the footer of the full-page view.
+      Clicking it opens this project&rsquo;s support page in a new browser tab, exactly as clicking a
+      scanned link does.</p>
+      <ul>
+        <li>The extension <strong>loads nothing</strong> from that page. It is a plain link, so the
+        extension itself still makes no network request of any kind.</li>
+        <li>Nothing about you is passed along. The page carries no identifier, no referrer data about
+        your vault and no scan history.</li>
+        <li>The support page is a static file served by GitHub Pages, and any payment is handled by
+        the payment provider you choose on that page (for example GitHub Sponsors). That provider may
+        set its own cookies and has its own privacy policy. <strong>We never receive your payment
+        details, and no part of your vault is ever involved.</strong></li>
+      </ul>
+
       <h2>What is stored locally</h2>
       <table>
         <thead>
@@ -215,10 +231,12 @@
       </ul>
 
       <h2>Third-party code</h2>
-      <p>The extension bundles two open-source libraries that run entirely inside the browser:
-      <strong>jsQR</strong> (Apache-2.0) for offline QR decoding and
-      <strong>QR Code generator for JavaScript</strong> (MIT) for local QR creation. Neither of them
-      performs network requests. See
+      <p>The extension bundles three open-source libraries that run entirely inside the browser:
+      <strong>jsQR</strong> (Apache-2.0) and <strong>zxing-wasm</strong> (MIT, a WebAssembly build
+      of the Apache-2.0 ZXing engine) for offline QR decoding, and
+      <strong>QR Code generator for JavaScript</strong> (MIT) for local QR creation. None of them
+      performs network requests: the WebAssembly module is read from the extension package, and the
+      address the upstream build would fetch it from is overridden. See
       <a href="https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
 
       <h2>Children</h2>

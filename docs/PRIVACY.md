@@ -1,7 +1,7 @@
 # Privacy Policy — QR Studio
 
-**Last updated:** 20 October 2026
-**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.0.0
+**Last updated:** 26 October 2026
+**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.1.0
 
 ## Summary
 
@@ -54,6 +54,23 @@ explicit click you make:
    source, so the QR code on screen can be decoded;
 2. opening a result link or the full-screen camera page in a new tab.
 
+## Links to other pages
+
+The extension contains **one** link that leaves the extension: a *Support
+development* link in the History tab and in the footer of the full-page view.
+Clicking it opens this project's support page in a new browser tab, exactly as
+clicking a scanned link does.
+
+- The extension **loads nothing** from that page. It is a plain link, so the
+  extension itself still makes no network request of any kind.
+- Nothing about you is passed along. The page carries no identifier, no
+  referrer data about your vault and no scan history.
+- The support page is a static file served by GitHub Pages, and any payment is
+  handled by the payment provider you choose on that page (for example GitHub
+  Sponsors). That provider may set its own cookies and has its own privacy
+  policy. **We never receive your payment details, and no part of your vault
+  is ever involved.**
+
 ## What is stored locally
 
 | Data | Storage location | When it is stored | When it is deleted |
@@ -87,10 +104,12 @@ copied to the clipboard automatically, and must be explicitly saved by you.
 
 ## Third-party code
 
-The extension bundles two open-source libraries that run entirely inside the
-browser: **jsQR** (Apache-2.0) for offline QR decoding and **QR Code generator
-for JavaScript** (MIT) for local QR creation. Neither of them performs network
-requests. See
+The extension bundles three open-source libraries that run entirely inside the
+browser: **jsQR** (Apache-2.0) and **zxing-wasm** (MIT, a WebAssembly build of
+the Apache-2.0 ZXing engine) for offline QR decoding, and **QR Code generator
+for JavaScript** (MIT) for local QR creation. None of them performs network
+requests: the WebAssembly module is read from the extension package, and the
+address the upstream build would fetch it from is overridden. See
 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
 
 ## Children
