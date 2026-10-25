@@ -31,6 +31,11 @@ release/
 /store/
 /docs/CHROME_WEB_STORE.md
 
+# The key that signs QR Studio Pro licences. It must never be committed, and
+# a copy should be kept somewhere safe: without it no new licence can be
+# issued. Only the public key lives in the repository, inside licence.js.
+/tools/keys/
+
 # Local scratch
 tmp/
 scratch/

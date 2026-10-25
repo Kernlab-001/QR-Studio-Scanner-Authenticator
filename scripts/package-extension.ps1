@@ -48,7 +48,9 @@ try {
         "popup.css",
         "popup.js",
         "jsqr.js",
-        "qrcode-generator.js"
+        "qrcode-generator.js",
+        "licence.js",
+        "pro.js"
     )
 
     $iconDir = Join-Path $root "icons"
