@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.2] — 2026-10-26
+
+### Fixed
+
+- **The authenticator code is no longer drawn inside a grey slab.** The code
+  sits in a button that was never styled, so the browser painted its own
+  button background around the digits. The box is gone and the code reads as
+  clean, bright monospace on the card.
+- **The brand mark is smaller and calmer.** The artwork's glowing orange tile
+  was loud at header size, so the header and the support page now use the QR
+  glyph on its own, in white, with the orange accent kept.
+
 ### Changed
 
 - The support page is laid out at a more readable size, and the one-off tip
@@ -212,7 +224,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.1...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.2...HEAD
+[2.3.2]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.1.0...v2.2.0

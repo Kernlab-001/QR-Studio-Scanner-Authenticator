@@ -50,7 +50,8 @@ try {
         "jsqr.js",
         "qrcode-generator.js",
         "licence.js",
-        "pro.js"
+        "pro.js",
+        "assets/brand-mark.png"
     )
 
     $iconDir = Join-Path $root "icons"
