@@ -750,6 +750,20 @@ code { color: #e9d5ff; }
 .account-code:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 .otp-code { color: var(--text-primary); font: 700 17px/1 var(--font-mono); letter-spacing: .04em; }
 .otp-time { margin-top: 4px; color: var(--text-muted); font-size: 9px; }
+
+/* The scanned code, shown straight away in the result card. */
+.result-code {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 9px;
+  padding: 11px 12px;
+  border: 1px solid rgba(249, 115, 22, .28);
+  border-radius: var(--radius-card);
+  background: rgba(249, 115, 22, .07);
+  text-align: center;
+}
+.result-code .otp-code { font-size: 26px; letter-spacing: .08em; }
+.result-code .otp-time { margin-top: 3px; }
 .account-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 5px; margin-top: -2px; }
 .mini-button {
   padding: 5px 8px;
