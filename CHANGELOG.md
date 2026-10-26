@@ -21,8 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The support page is laid out at a more readable size, and the one-off tip
-  row now offers $2, $5, $10, $15, $20, $50, $100 and a custom amount.
+- **A scanned setup code shows the code straight away.** Scanning a 2FA setup
+  QR used to show the details and ask you to walk through a form before you
+  could see any code. The rotating code now appears in the result card, counts
+  down as usual, and *Save to vault* puts it in the vault in one click. The
+  secret itself stays hidden in the setup URI, exactly as before.
+- The support page is laid out at a more readable size, the one-off tip row
+  now offers $2, $5, $10, $15, $20, $50, $100 and a custom amount, and the
+  whole page uses the extension's own colours and controls so it reads as part
+  of the same product.
 
 ## [2.3.1] — 2026-10-26
 

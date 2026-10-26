@@ -21,6 +21,7 @@ const state = {
   history: [],
   historyEnabled: false,
   currentResult: null,
+  resultUpdater: null,
   codeCache: new Map(),
   accountUpdaters: new Map(),
   expandedAccounts: new Set(),
@@ -60,6 +61,9 @@ const ui = {
   resultLabel: $('#resultLabel'),
   resultDescription: $('#resultDescription'),
   resultValue: $('#resultValue'),
+  resultCode: $('#resultCode'),
+  resultCodeValue: $('#resultCodeValue'),
+  resultCodeTime: $('#resultCodeTime'),
   resultActions: $('#resultActions'),
   resultList: $('#resultList'),
   resultListHeading: $('#resultListHeading'),
@@ -899,7 +903,7 @@ function action(label, onClick, kind = 'action') {
   return { label, onClick, kind };
 }
 
-function showResult({ type, label, description, value, actions = [] }) {
+function showResult({ type, label, description, value, actions = [], code = null }) {
   ui.resultCard.hidden = false;
   ui.resultType.textContent = type;
   ui.resultLabel.textContent = label;
@@ -908,6 +912,15 @@ function showResult({ type, label, description, value, actions = [] }) {
   ui.resultActions.replaceChildren();
   ui.resultList.hidden = true;
   ui.resultListItems.replaceChildren();
+  // A code that was scanned is shown straight away, so there is no need to
+  // save it first just to see what it generates.
+  state.resultUpdater = null;
+  ui.resultCode.hidden = !code;
+  if (code) {
+    const update = () => updateAccountCode(code.account, ui.resultCodeValue, ui.resultCodeTime);
+    update();
+    state.resultUpdater = update;
+  }
   actions.forEach((item) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -1204,7 +1217,11 @@ async function handleScannedValue(rawValue, { source = 'scanner', extra = [] } =
         label: `${account.issuer} · ${account.accountName}`,
         description: `${account.type.toUpperCase()} · ${account.algorithm} · ${account.digits} digits${account.type === 'totp' ? ` · ${account.period}s` : ` · counter ${account.counter}`}${warning}`,
         value: redactOtpUri(raw),
-        actions: [action('Review & import', () => reviewAccount(account))]
+        code: { account },
+        actions: [
+          action('Save to vault', () => saveScannedAccount(account)),
+          action('Edit details', () => reviewAccount(account))
+        ]
       });
       setScannerStatus('Setup found');
     } catch (error) {
@@ -1290,6 +1307,28 @@ function reviewAccount(account) {
   openManualForm();
   fillManualForm(account);
   ui.manualWarning.textContent = account.issuerMismatch ? 'Issuer names differ between the URI label and the issuer field. Confirm the correct issuer before saving.' : 'Review the fields below, then explicitly save the authenticator.';
+}
+
+// Saving a scanned setup is one click: the code is already on screen, so
+// there is no need to go through the form unless something has to be changed.
+async function saveScannedAccount(account) {
+  try {
+    const duplicate = state.accounts.find((item) => item.secret === account.secret && item.issuer === account.issuer && item.accountName === account.accountName);
+    if (duplicate) {
+      if (!confirm(`${account.issuer} is already in your vault. Replace it with these settings?`)) return;
+      account.id = duplicate.id;
+      account.addedAt = duplicate.addedAt;
+      account.favorite = duplicate.favorite;
+      state.accounts = state.accounts.map((item) => item.id === duplicate.id ? account : item);
+    } else {
+      state.accounts.push(account);
+    }
+    await saveAccounts();
+    renderAccounts();
+    showToast(duplicate ? 'Authenticator updated.' : 'Authenticator saved locally.');
+  } catch (error) {
+    showToast(`Could not save the authenticator: ${error.message}`, 'error');
+  }
 }
 
 function openManualForm() {
@@ -2210,7 +2249,10 @@ function bindEvents() {
   window.addEventListener('unload', stopCamera);
 }
 
-setInterval(() => state.accountUpdaters.forEach((update) => update()), 1000);
+setInterval(() => {
+  state.accountUpdaters.forEach((update) => update());
+  if (state.resultUpdater) state.resultUpdater();
+}, 1000);
 bindEvents();
 setSource('tab');
 renderCreatorFields();
