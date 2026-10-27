@@ -51,6 +51,9 @@ try {
         "qrcode-generator.js",
         "licence.js",
         "pro.js",
+        "account.html",
+        "account.js",
+        "account-config.js",
         "assets/brand-mark.png"
     )
 

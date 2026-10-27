@@ -102,6 +102,10 @@ const ui = {
   qrContrastWarning: $('#qrContrastWarning'),
   qrCompatibilityHint: $('#qrCompatibilityHint'),
   proCard: $('#proCard'),
+  accountState: $('#accountState'),
+  accountNote: $('#accountNote'),
+  accountSignIn: $('#accountSignIn'),
+  accountSignOut: $('#accountSignOut'),
   proState: $('#proState'),
   proNote: $('#proNote'),
   proActivate: $('#proActivate'),
@@ -1013,6 +1017,73 @@ function renderExtraResults(rawValues) {
 
 /* ------------------------------------------------------------------ pro */
 
+// Every Pro feature is listed here, so a new one routes through the same
+// gate: no licence key -> sign in first, signed in -> go and pay.
+const PRO_FEATURES = {
+  'bulk-import': { label: 'Bulk import' },
+  batch: { label: 'Batch QR creation' }
+};
+
+function openAccountPage() {
+  const page = window.QRStudioAccountConfig?.accountPage || 'account.html';
+  let url = page;
+  try {
+    url = chrome.runtime.getURL(page);
+  } catch {
+    // Preview mode: the page sits next to this file.
+  }
+  try {
+    chrome.tabs.create({ url });
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+function openPaymentPage() {
+  const url = window.QRStudioAccountConfig?.paymentUrl;
+  if (!url) {
+    showToast('The payment page is not set up yet.', 'error');
+    return;
+  }
+  try {
+    chrome.tabs.create({ url });
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+// Returns true when the feature may be used.
+async function allowProFeature(featureId) {
+  const feature = PRO_FEATURES[featureId];
+  if (isPro()) return true;
+  const account = await window.QRStudioAccount?.read();
+  if (!account?.email) {
+    showToast(`${feature?.label || 'This feature'} needs an account. Signing in now.`);
+    openAccountPage();
+    return false;
+  }
+  showToast(`${feature?.label || 'This feature'} is a QR Studio Pro feature.`);
+  openPaymentPage();
+  return false;
+}
+
+async function renderAccountState() {
+  const account = await window.QRStudioAccount?.read();
+  const signedIn = Boolean(account?.email);
+  ui.accountState.textContent = signedIn ? account.email : 'Not signed in';
+  ui.accountSignIn.hidden = signedIn;
+  ui.accountSignOut.hidden = !signedIn;
+  ui.accountNote.textContent = signedIn
+    ? 'Signed in. A licence key is what unlocks the Pro features.'
+    : 'Sign in to reach the Pro features. Everything else is free and needs no account.';
+}
+
+async function signOutAccount() {
+  await window.QRStudioAccount?.clear();
+  await renderAccountState();
+  showToast('Signed out.');
+}
+
 // The licence is checked offline, so the free features never depend on a
 // server and the paid ones unlock without a sign-in.
 function isPro() {
@@ -1084,6 +1155,18 @@ function openBulkImport() {
   }
   ui.bulkImportPanel.hidden = false;
   ui.bulkImportText.focus();
+}
+
+// The gate: a Pro feature is only opened once the licence, or the account,
+// is in place.
+async function requestBulkImport() {
+  if (!(await allowProFeature('bulk-import'))) return;
+  openBulkImport();
+}
+
+async function requestBatchMode() {
+  if (!(await allowProFeature('batch'))) return;
+  setCreatorMode('batch');
 }
 
 async function importAccounts(accounts) {
@@ -2151,7 +2234,7 @@ function bindEvents() {
   });
   $('#activateLicence').addEventListener('click', activateLicence);
   $('#removeLicence').addEventListener('click', removeLicence);
-  $('#bulkImport').addEventListener('click', openBulkImport);
+  $('#bulkImport').addEventListener('click', requestBulkImport);
   $('#closeBulkImport').addEventListener('click', () => { ui.bulkImportPanel.hidden = true; });
   $('#bulkImportPaste').addEventListener('click', () => runBulkImport(ui.bulkImportText.value));
   $('#bulkImportFile').addEventListener('click', () => ui.bulkImportInput.click());
@@ -2162,8 +2245,13 @@ function bindEvents() {
     ui.bulkImportText.value = text;
     await runBulkImport(text);
   });
-  $$('.mode-button').forEach((button) => button.addEventListener('click', () => setCreatorMode(button.dataset.mode)));
+  $$('.mode-button').forEach((button) => button.addEventListener('click', () => {
+    if (button.dataset.mode === 'batch') requestBatchMode();
+    else setCreatorMode('single');
+  }));
   $('#generateBatch').addEventListener('click', generateBatchCodes);
+  $('#accountSignIn').addEventListener('click', openAccountPage);
+  $('#accountSignOut').addEventListener('click', signOutAccount);
   $('#showManualForm').addEventListener('click', openManualForm);
   $('#hideManualForm').addEventListener('click', closeManualForm);
   $('#parseManualUri').addEventListener('click', parseManualUri);
@@ -2257,6 +2345,7 @@ bindEvents();
 setSource('tab');
 renderCreatorFields();
 renderProState();
+renderAccountState();
 refreshLicence();
 loadState().catch((error) => showToast(`Could not load saved data: ${error.message}`, 'error'));
 

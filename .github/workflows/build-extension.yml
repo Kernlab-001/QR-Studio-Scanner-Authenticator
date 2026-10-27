@@ -68,8 +68,19 @@ jobs:
               throw new Error('optional_permissions must stay empty');
             }
             const csp = m.content_security_policy && m.content_security_policy.extension_pages;
-            if (csp && /https?:/.test(csp)) {
-              throw new Error('the content security policy must not allow remote sources');
+            if (csp) {
+              // Remote code is never allowed, and the only remote the
+              // extension may talk to is the account server.
+              const withoutConnect = csp.replace(/connect-src[^;]*/g, '');
+              if (/https?:/.test(withoutConnect)) {
+                throw new Error('the content security policy must not allow remote sources');
+              }
+              const connect = (/connect-src([^;]*)/.exec(csp) || [])[1] || '';
+              const remote = connect.split(/\s+/).filter((source) => /^https?:/.test(source));
+              const unexpected = remote.filter((source) => source !== 'https://*.supabase.co');
+              if (unexpected.length) {
+                throw new Error('only the account server may be contacted: ' + unexpected.join(', '));
+              }
             }
             console.log('local-only promise intact - permissions:', perms.join(', ') || 'none');
           "
@@ -85,6 +96,8 @@ jobs:
           test -f THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md is missing"; exit 1; }
           test -f vendor/zxing/ZXING-WASM-LICENSE.txt || { echo "the vendored decoder licence is missing"; exit 1; }
           grep -qi 'zxing' THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md does not mention the vendored decoder"; exit 1; }
+          test -f vendor/supabase/LICENSE || { echo "the account client licence is missing"; exit 1; }
+          grep -qi 'supabase' THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md does not mention the account client"; exit 1; }
           echo "third-party notices OK"
 
       - name: Round-trip the vendored libraries

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in — QR Studio</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body class="account-page">
+    <main class="app-shell">
+      <header class="topbar">
+        <img class="brand-mark" src="assets/brand-mark.png" alt="" width="26" height="26">
+        <div class="brand-copy">
+          <p class="eyebrow">ACCOUNT</p>
+          <h1>QR Studio</h1>
+        </div>
+      </header>
+
+      <section class="account-panel" id="signedOut">
+        <h2 id="accountHeading">Sign in</h2>
+        <p class="account-intro" id="accountIntro">Sign in to reach the QR Studio Pro features: bulk import from other authenticator apps and batch QR creation. Everything else stays free and works without an account.</p>
+        <form class="account-form" id="accountForm">
+          <label>Email <input id="accountEmail" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+          <label>Password <input id="accountPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters" required></label>
+          <button class="primary-button full" id="accountSubmit" type="submit">Sign in</button>
+        </form>
+        <button class="text-button account-switch" id="accountSwitch" type="button">No account yet? Create one</button>
+        <p class="account-message" id="accountMessage" role="status"></p>
+        <p class="account-note">The password is handled by Supabase and never reaches QR Studio. The extension only keeps the signed-in email and a session token, on this device.</p>
+      </section>
+
+      <section class="account-panel" id="signedIn" hidden>
+        <h2>Signed in</h2>
+        <p class="account-email" id="accountEmail"></p>
+        <p class="account-intro" id="accountState">Your Pro features are unlocked by a licence key. Paste it in QR Studio under Vault → QR Studio Pro.</p>
+        <button class="secondary-button full" id="accountSignOut" type="button">Sign out</button>
+        <p class="account-message" id="accountSignedInMessage" role="status"></p>
+      </section>
+
+      <section class="account-panel account-notice" id="notConfigured" hidden>
+        <h2>Account server not set up yet</h2>
+        <p class="account-intro">This build has no account server connected. Add your Supabase project details to <code>account-config.js</code> and reload the extension.</p>
+      </section>
+    </main>
+    <script src="vendor/supabase/supabase.js"></script>
+    <script src="account-config.js"></script>
+    <script src="account.js"></script>
+  </body>
+</html>

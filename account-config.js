@@ -1,0 +1,62 @@
+// QR Studio account settings, and the little store the session lives in.
+//
+// EDIT THESE VALUES and the account system is live. Nothing else needs to
+// change - the extension reads them from here.
+window.QRStudioAccountConfig = {
+  // Your Supabase project. Copy both from
+  // https://supabase.com/dashboard/project/<your-project>/settings/api
+  // The anon key is the public one; it is safe to ship inside the extension.
+  supabaseUrl: 'https://YOUR-PROJECT.supabase.co',
+  supabaseAnonKey: 'YOUR-ANON-PUBLIC-KEY',
+
+  // Where a signed-in user without a licence is sent to pay.
+  // For now this is the support page with the tip buttons on it.
+  paymentUrl: 'https://kernlab-001.github.io/QR-Studio-Scanner-Authenticator/support.html#tip',
+
+  // The page that holds the sign-in form. It ships inside the extension, so
+  // the session ends up in the extension's own storage.
+  accountPage: 'account.html'
+};
+
+window.QRStudioAccountConfig.configured = Boolean(
+  window.QRStudioAccountConfig.supabaseUrl
+  && window.QRStudioAccountConfig.supabaseUrl.includes('YOUR-PROJECT') === false
+  && window.QRStudioAccountConfig.supabaseAnonKey
+  && window.QRStudioAccountConfig.supabaseAnonKey.includes('YOUR-ANON') === false
+);
+
+// The signed-in account is kept in the extension's own storage. The popup
+// only ever reads it, so it never has to load the Supabase client itself.
+window.QRStudioAccount = {
+  STORAGE_KEY: 'qrStudioAccount',
+
+  async read() {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.storage?.local) return null;
+      const stored = await chrome.storage.local.get(this.STORAGE_KEY);
+      const account = stored?.[this.STORAGE_KEY];
+      return account?.email ? account : null;
+    } catch {
+      return null;
+    }
+  },
+
+  async write(session) {
+    if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
+    await chrome.storage.local.set({
+      [this.STORAGE_KEY]: {
+        email: session?.user?.email || session?.email || '',
+        id: session?.user?.id || session?.id || '',
+        accessToken: session?.access_token || session?.accessToken || '',
+        refreshToken: session?.refresh_token || session?.refreshToken || '',
+        expiresAt: session?.expires_at || session?.expiresAt || 0,
+        signedInAt: Date.now()
+      }
+    });
+  },
+
+  async clear() {
+    if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
+    await chrome.storage.local.remove(this.STORAGE_KEY);
+  }
+};
