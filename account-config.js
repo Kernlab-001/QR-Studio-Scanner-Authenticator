@@ -14,6 +14,11 @@ window.QRStudioAccountConfig = {
   // For now this is the support page with the tip buttons on it.
   paymentUrl: 'https://kernlab-001.github.io/QR-Studio-Scanner-Authenticator/support.html#tip',
 
+  // Where Google sends the browser back to after a sign-in. The session comes
+  // back in the address, and the extension picks it up from there.
+  // This address has to be in the account server's redirect list.
+  googleRedirectUrl: 'https://kernlab-001.github.io/QR-Studio-Scanner-Authenticator/support.html',
+
   // The page that holds the sign-in form. It ships inside the extension, so
   // the session ends up in the extension's own storage.
   accountPage: 'account.html'

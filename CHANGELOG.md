@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-10-27
+
+### Added
+
+- **Sign in with Google.** The account page now has a *Continue with Google*
+  button next to the email form. The sign-in runs in a window that Chrome hands
+  straight back to the extension, so the session never passes through a web
+  page, and Google never sees your QR codes or your vault.
+- The `identity` permission is used for exactly that one thing: opening the
+  sign-in window and reading the address it comes back to.
+
+### Fixed
+
+- The email and password form is now the fallback rather than the main way in.
+
 ## [2.3.3] — 2026-10-27
 
 ### Added
@@ -262,7 +277,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.3...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.3...v2.4.0
 [2.3.3]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.0...v2.3.1

@@ -52,7 +52,7 @@ jobs:
         run: |
           node -e "
             const m = require('./manifest.json');
-            const allowed = new Set(['storage', 'activeTab']);
+            const allowed = new Set(['storage', 'activeTab', 'identity']);
             const perms = m.permissions || [];
             const extra = perms.filter((p) => !allowed.has(p));
             if (extra.length) {

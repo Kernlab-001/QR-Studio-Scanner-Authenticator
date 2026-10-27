@@ -1,7 +1,7 @@
 # Privacy Policy — QR Studio
 
 **Last updated:** 26 October 2026
-**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.3.3
+**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.4.0
 
 ## Summary
 
@@ -95,11 +95,17 @@ The account is optional. Everything in QR Studio works without one — scanning,
 the authenticator vault, the history and QR creation are free and need no
 sign-in.
 
+You can sign in **with Google** or **with an email address and a password**.
+Both end up in the same place: an account on the account server, and a session
+in your browser.
+
 If you create an account:
 
-- Your **email address and password go to the account server** (Supabase), which
-  handles the sign-in. Your password is never stored by QR Studio and never
-  passes through the extension.
+- With Google, Google checks your address and hands the account server an
+  identity for it. QR Studio never sees your Google password.
+- With a password, your **email address and password go to the account server**
+  (Supabase), which handles the sign-in. Your password is never stored by QR
+  Studio and never passes through the extension.
 - The extension keeps the signed-in **email address and a session token** in
   `chrome.storage.local` on your device, so it can tell whether you are signed
   in.
@@ -111,6 +117,15 @@ If you create an account:
 Pro features need a licence key. The key is checked offline, so it works
 whether or not you are signed in — the account only decides where you are sent
 when you click a Pro feature.
+
+## Permissions, and what each one is for
+
+| Permission | Why it is there |
+|---|---|
+| `storage` | Keeps your vault, settings, optional history and any licence key in your own Chrome profile. |
+| `activeTab` | Scans the visible page when you choose the *Tab* source, and opens a result link in a new tab. |
+| `identity` | Opens the Google sign-in window and reads the address it comes back to. It is used for nothing else. |
+| Camera | Asked for at the moment you start a camera scan, not at install time. |
 
 ## Links to other pages
 
