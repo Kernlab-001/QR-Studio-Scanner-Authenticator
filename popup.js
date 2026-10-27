@@ -1644,7 +1644,21 @@ async function saveAccounts() {
   await storageSet({ [STORAGE.accounts]: storedAccounts });
 }
 
+function updateHistoryEmptyState() {
+  // Only the note under the toggle changes when the switch is flipped. The
+  // list itself is left alone, so the panel does not jump or look like it
+  // reloaded, and the setting simply stays until it is turned off again.
+  if (state.history.length) return;
+  const empty = ui.historyList.querySelector('.empty-state span');
+  if (!empty) return;
+  empty.textContent = state.historyEnabled
+    ? 'No general QR scans saved yet.'
+    : 'History is off. Turn it on above to save future general QR scans locally.';
+}
+
 function renderHistory() {
+  const panel = ui.historyList.closest('.view-panel');
+  const scrollTop = panel ? panel.scrollTop : 0;
   ui.historyList.replaceChildren();
   ui.historyEnabled.checked = state.historyEnabled;
   const query = ui.historySearch.value.trim().toLowerCase();
@@ -1686,6 +1700,7 @@ function renderHistory() {
     item.append(title, meta, raw, actions);
     ui.historyList.append(item);
   });
+  if (panel) panel.scrollTop = scrollTop;
 }
 
 function bytesToBase64(bytes) {
@@ -2271,7 +2286,9 @@ function bindEvents() {
   ui.historyEnabled.addEventListener('change', async () => {
     state.historyEnabled = ui.historyEnabled.checked;
     await storageSet({ [STORAGE.historyEnabled]: state.historyEnabled });
-    renderHistory();
+    // Only the note changes, so the panel stays where it is and the setting
+    // simply keeps until it is turned off again.
+    updateHistoryEmptyState();
     showToast(state.historyEnabled ? 'General QR scan history is now saved locally.' : 'New scans will no longer be saved to history.');
   });
   ui.historySearch.addEventListener('input', renderHistory);

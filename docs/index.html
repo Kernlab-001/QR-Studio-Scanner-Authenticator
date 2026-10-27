@@ -6,91 +6,103 @@
     <title>Privacy Policy — QR Studio</title>
     <meta name="description" content="QR Studio does not collect, transmit, sell or share any data. Everything stays on your device.">
     <style>
+      /* The same design system as the extension: Tactile Obsidian & Electric
+         Coral. Same tokens, same surfaces, same controls. */
       :root {
         color-scheme: dark;
-        --ink: #f4f7ff;
-        --muted: #9ca9c5;
-        --faint: #6c7895;
-        --line: rgba(169, 185, 228, .15);
-        --page: #080d1d;
-        --panel: #121a33;
-        --blue: #45beff;
-        --violet: #9b7bff;
-        --mint: #63e2b0;
+        --bg-app: #0C0D10;
+        --bg-elevated: #14161B;
+        --bg-interactive: #1C1F26;
+        --bg-active: #252934;
+        --border-subtle: rgba(255, 255, 255, .07);
+        --border-strong: rgba(255, 255, 255, .14);
+        --text-primary: #F3F4F6;
+        --text-secondary: #9CA3AF;
+        --text-muted: #6B7280;
+        --accent-primary: #F97316;
+        --accent-primary-hover: #FB923C;
+        --accent-local-trust: #10B981;
+        --font-ui: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+        --radius-card: 14px;
+        --radius-control: 10px;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        padding: 48px 20px 80px;
-        color: var(--ink);
+        padding: 40px 18px 64px;
+        color: var(--text-primary);
         background:
-          radial-gradient(ellipse 70% 28% at 91% -4%, rgba(100, 89, 244, .38), transparent 72%),
-          radial-gradient(ellipse 50% 27% at -10% 47%, rgba(35, 157, 220, .14), transparent 70%),
-          var(--page);
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.62;
+          radial-gradient(ellipse 62% 26% at 88% -6%, rgba(249, 115, 22, .10), transparent 70%),
+          radial-gradient(ellipse 46% 24% at -6% 52%, rgba(255, 255, 255, .04), transparent 72%),
+          var(--bg-app);
+        font-family: var(--font-ui);
+        font-size: 14px;
+        line-height: 1.55;
       }
-      main { max-width: 820px; margin: 0 auto; }
+      main { max-width: 760px; margin: 0 auto; }
       header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
       .mark {
-        position: relative;
-        width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px;
-        background: linear-gradient(135deg, var(--blue), var(--violet));
-        box-shadow: 0 8px 20px rgba(76, 134, 255, .22);
+        width: 34px; height: 34px; flex: 0 0 auto;
+        border-radius: 8px;
+        object-fit: contain;
       }
-      .mark::before, .mark::after {
-        position: absolute; display: block; content: ""; background: #0a1130;
+      .eyebrow {
+        margin: 0 0 2px;
+        color: var(--text-muted);
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
       }
-      .mark::before { width: 9px; height: 9px; top: 7px; left: 7px; box-shadow: 12px 0 #0a1130, 0 12px #0a1130; }
-      .mark::after { width: 4px; height: 4px; right: 7px; bottom: 7px; box-shadow: -6px 0 #0a1130, 0 -6px #0a1130; }
-      .eyebrow { margin: 0 0 2px; color: var(--blue); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
-      h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: -.03em; }
-      .meta { margin: 0 0 34px; color: var(--faint); font-size: 13px; }
+      h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+      .meta { margin: 12px 0 26px; color: var(--text-muted); font-size: 12px; }
       h2 {
-        margin: 40px 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line);
-        font-size: 19px; letter-spacing: -.02em;
+        margin: 32px 0 10px; padding-bottom: 9px; border-bottom: 1px solid var(--border-subtle);
+        font-size: 16px; font-weight: 700; letter-spacing: -.01em;
       }
-      p, li { color: var(--muted); font-size: 15px; }
-      strong { color: var(--ink); }
-      ul, ol { padding-left: 22px; }
-      li { margin-bottom: 7px; }
+      p, li { color: var(--text-secondary); font-size: 13.5px; }
+      strong { color: var(--text-primary); }
+      ul, ol { padding-left: 19px; }
+      li { margin-bottom: 6px; }
       .summary {
-        margin: 0 0 30px; padding: 18px 20px; border: 1px solid rgba(99, 226, 176, .26);
-        border-radius: 14px; background: rgba(99, 226, 176, .07);
+        margin: 0 0 24px; padding: 15px 16px; border: 1px solid rgba(16, 185, 129, .28);
+        border-radius: var(--radius-card); background: rgba(16, 185, 129, .07);
       }
-      .summary p { margin: 0; color: #dff6ec; font-size: 16px; }
-      table { width: 100%; margin: 14px 0 8px; border-collapse: collapse; font-size: 14px; }
-      th, td { padding: 10px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
-      th { color: var(--ink); background: rgba(18, 26, 51, .85); font-size: 13px; }
-      td { color: var(--muted); }
+      .summary p { margin: 0 0 8px; color: var(--text-primary); font-size: 13.5px; }
+      .summary p:last-child { margin-bottom: 0; }
+      table { width: 100%; margin: 14px 0 8px; border-collapse: collapse; font-size: 12.5px; }
+      th, td { padding: 9px 11px; border: 1px solid var(--border-subtle); text-align: left; vertical-align: top; }
+      th { color: var(--text-primary); background: var(--bg-elevated); font-size: 12px; }
+      td { color: var(--text-secondary); }
       code {
-        padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px;
-        color: #d1c1ff; background: rgba(4, 9, 24, .5);
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px;
+        padding: 1px 5px; border: 1px solid var(--border-subtle); border-radius: 5px;
+        color: var(--text-primary); background: var(--bg-interactive);
+        font-family: var(--font-mono); font-size: 11.5px;
       }
       .card {
-        margin: 26px 0 0; padding: 18px 20px; border: 1px solid var(--line);
-        border-radius: 14px; background: rgba(18, 26, 51, .8);
+        margin: 24px 0 0; padding: 15px 16px; border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-card); background: var(--bg-elevated);
       }
       .card h2 { margin-top: 0; border: 0; padding-bottom: 0; }
       .card p:last-child { margin-bottom: 0; }
-      a { color: var(--blue); }
-      .foot { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
-      .foot a { color: var(--muted); }
+      a { color: var(--accent-primary-hover); }
+      .foot { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 12px; }
+      .foot a { color: var(--text-secondary); }
     </style>
   </head>
   <body>
     <main>
       <header>
-        <div class="mark" aria-hidden="true"></div>
+        <img class="mark" src="icon128.png" width="34" height="34" alt="QR Studio">
         <div>
-          <p class="eyebrow">LOCAL-ONLY TOOLKIT</p>
+          <p class="eyebrow">Local toolkit</p>
           <h1>Privacy Policy — QR Studio</h1>
         </div>
       </header>
       <p class="meta">
         Last updated: 26 October 2026 &middot;
-        Applies to QR Studio — Scanner &amp; Authenticator (Chrome extension), version 2.3.2
+        Applies to QR Studio — Scanner &amp; Authenticator (Chrome extension), version 2.3.3
       </p>
 
       <div class="summary">

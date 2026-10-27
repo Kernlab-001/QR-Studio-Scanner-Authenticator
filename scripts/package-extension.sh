@@ -36,7 +36,7 @@ fi
 echo "manifest.json OK - version $VERSION"
 
 # --- collect the files to ship ------------------------------------------------
-FILES=(manifest.json popup.html popup.css popup.js jsqr.js qrcode-generator.js licence.js pro.js account.html account.js account-config.js assets/brand-mark.png)
+FILES=(manifest.json popup.html popup.css popup.js jsqr.js qrcode-generator.js licence.js pro.js account.html account.js account-config.js)
 if [ -d icons ]; then
   while IFS= read -r icon; do
     FILES+=("icons/$(basename "$icon")")
