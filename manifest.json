@@ -1,14 +1,18 @@
 {
   "manifest_version": 3,
   "name": "QR Studio — Scanner & Authenticator",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "description": "A local QR scanner, creator, history tool, and offline authenticator vault.",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "identity"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' https://*.supabase.co; object-src 'self'"
   },
   "externally_connectable": {
-    "matches": ["https://kernlab-001.github.io/*"]
+    "matches": [
+      "https://kernlab-001.github.io/*",
+      "https://dzzeumalickwfgskbmgs.supabase.co/*",
+      "https://*.supabase.co/*"
+    ]
   },
   "icons": {
     "16": "icons/icon16.png",

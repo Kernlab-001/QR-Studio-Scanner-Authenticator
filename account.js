@@ -17,6 +17,7 @@
   const passwordInput = document.getElementById('accountPassword');
   const submitButton = document.getElementById('accountSubmit');
   const switchButton = document.getElementById('accountSwitch');
+  const googleButton = document.getElementById('googleSignIn');
   const heading = document.getElementById('accountHeading');
   const intro = document.getElementById('accountIntro');
   const message = document.getElementById('accountMessage');
@@ -30,6 +31,17 @@
   function say(text, kind = '') {
     message.textContent = text;
     message.className = `account-message${kind ? ` ${kind}` : ''}`;
+  }
+
+  // The page the provider sends the browser back to. It only has to be an
+  // address the account server is allowed to redirect to.
+  function redirectTarget() {
+    if (config.googleRedirectUrl) return config.googleRedirectUrl;
+    try {
+      return chrome.runtime.getURL('account.html');
+    } catch {
+      return new URL('account.html', window.location.href).href;
+    }
   }
 
   function setMode(next) {
@@ -112,6 +124,95 @@
     signedInMessage.textContent = 'Signed out.';
   }
 
+  // Google sign-in. The provider sends the browser back to the redirect page
+  // with the session in the address, and the account page picks it up from
+  // there, so the session ends up in the extension's own storage.
+  async function signInWithGoogle() {
+    if (!client) {
+      say('The account server is not configured yet.', 'error');
+      return;
+    }
+    googleButton.disabled = true;
+    googleButton.textContent = 'Opening Google…';
+    try {
+      const { data, error } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: redirectTarget(), skipBrowserRedirect: true }
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error('Google sign-in could not be started.');
+
+      // In the extension, the sign-in runs in a window that Chrome hands back
+      // to us, so the session never touches a web page. Chrome watches for
+      // the redirect address, so it is spelled out for it as well.
+      if (chrome?.identity?.launchWebAuthFlow) {
+        const authUrl = new URL(data.url);
+        authUrl.searchParams.set('redirect_uri', redirectTarget());
+        const returned = await chrome.identity.launchWebAuthFlow({ url: authUrl.toString(), interactive: true });
+        if (!returned) {
+          say('The sign-in was cancelled.', 'error');
+          return;
+        }
+        const session = await sessionFromUrl(returned);
+        if (!session) {
+          say('Google did not return a session. Please try again.', 'error');
+          return;
+        }
+        await persist(session);
+        say('Signed in.', 'good');
+        return;
+      }
+
+      // Outside the extension, the browser opens and comes back to this page,
+      // which picks the session up from the address.
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+      say('Finish the sign-in in the new tab, then come back here.', 'good');
+    } catch (error) {
+      say(String(error?.message || error), 'error');
+    } finally {
+      googleButton.disabled = false;
+      googleButton.textContent = '';
+      googleButton.append(
+        Object.assign(document.createElement('span'), { textContent: 'Continue with Google' })
+      );
+    }
+  }
+
+  // Turns what the provider sent back into a session: either the tokens
+  // themselves, or the one-time code that is exchanged for them.
+  async function sessionFromUrl(raw) {
+    const url = new URL(raw);
+    const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+    const accessToken = hash.get('access_token');
+    const refreshToken = hash.get('refresh_token');
+    if (accessToken && refreshToken) {
+      const { data, error } = await client.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (error) throw error;
+      return data?.session || null;
+    }
+    const code = url.searchParams.get('code');
+    if (code) {
+      const { data, error } = await client.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      return data?.session || null;
+    }
+    return null;
+  }
+
+  // Picks up a session that came back from the provider, and keeps it in the
+  // extension's own storage.
+  async function adoptSession() {
+    if (!client) return null;
+    const { data } = await client.auth.getSession();
+    const session = data?.session;
+    if (!session) return null;
+    await persist(session);
+    return session;
+  }
+
   async function start() {
     if (!config.configured) {
       signedOut.hidden = true;
@@ -120,8 +221,15 @@
       return;
     }
     client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-      auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+      auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, detectSessionInUrl: true }
     });
+    // A sign-in that came back from Google lands here with the session in the
+    // address, so it is picked up and stored.
+    const session = await adoptSession();
+    if (session) {
+      say('Signed in.', 'good');
+      return;
+    }
     const existing = await store.read();
     if (existing) {
       showSignedIn(existing);
@@ -134,5 +242,13 @@
   form.addEventListener('submit', handleSubmit);
   switchButton.addEventListener('click', () => setMode(mode === 'signup' ? 'signin' : 'signup'));
   signOutButton.addEventListener('click', signOut);
+  googleButton.addEventListener('click', signInWithGoogle);
+  // If the sign-in happened in another tab, pick it up when this one comes
+  // back to the front.
+  window.addEventListener('focus', async () => {
+    if (!client || !signedOut.hidden) return;
+    const session = await adoptSession();
+    if (session) say('Signed in.', 'good');
+  });
   start();
 })();

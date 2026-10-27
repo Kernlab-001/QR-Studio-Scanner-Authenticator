@@ -902,6 +902,33 @@ code { color: #e9d5ff; }
 .account-panel h2 { margin: 0 0 6px; font-size: 15px; }
 .account-intro { margin: 0 0 12px; color: var(--text-secondary); font-size: 11.5px; line-height: 1.5; }
 .account-form { display: grid; gap: 9px; }
+.google-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg-interactive);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+  transition: background .14s ease, border-color .14s ease;
+}
+.google-button:hover:not(:disabled) { background: var(--bg-active); }
+.google-button:disabled { opacity: .6; cursor: default; }
+.google-button svg { width: 16px; height: 16px; fill: currentColor; }
+.account-or {
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px 0 12px; color: var(--text-muted); font-size: 10.5px;
+}
+.account-or::before, .account-or::after {
+  content: ""; flex: 1 1 auto; height: 1px; background: var(--border-subtle);
+}
 .account-form label { display: grid; gap: 4px; color: var(--text-secondary); font-size: 10.5px; }
 .account-form input {
   padding: 8px 9px;
