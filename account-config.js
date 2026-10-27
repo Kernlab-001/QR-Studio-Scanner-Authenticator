@@ -5,9 +5,10 @@
 window.QRStudioAccountConfig = {
   // Your Supabase project. Copy both from
   // https://supabase.com/dashboard/project/<your-project>/settings/api
-  // The anon key is the public one; it is safe to ship inside the extension.
-  supabaseUrl: 'https://YOUR-PROJECT.supabase.co',
-  supabaseAnonKey: 'YOUR-ANON-PUBLIC-KEY',
+  // The publishable key is the public one; it is safe to ship inside the
+  // extension. Never put the secret key here - that one belongs on a server.
+  supabaseUrl: 'https://dzzeumalickwfgskbmgs.supabase.co',
+  supabaseAnonKey: 'sb_publishable_QxOr6kDU6OP-nSjCDwupgA_518fpZz-',
 
   // Where a signed-in user without a licence is sent to pay.
   // For now this is the support page with the tip buttons on it.
@@ -30,11 +31,20 @@ window.QRStudioAccountConfig.configured = Boolean(
 window.QRStudioAccount = {
   STORAGE_KEY: 'qrStudioAccount',
 
+  hasStorage() {
+    return typeof chrome !== 'undefined' && Boolean(chrome.storage?.local);
+  },
+
   async read() {
     try {
-      if (typeof chrome === 'undefined' || !chrome.storage?.local) return null;
-      const stored = await chrome.storage.local.get(this.STORAGE_KEY);
-      const account = stored?.[this.STORAGE_KEY];
+      if (this.hasStorage()) {
+        const stored = await chrome.storage.local.get(this.STORAGE_KEY);
+        const account = stored?.[this.STORAGE_KEY];
+        return account?.email ? account : null;
+      }
+      // Preview mode, when the page is opened straight from a file.
+      const saved = localStorage.getItem(`qr-studio-preview:${this.STORAGE_KEY}`);
+      const account = saved ? JSON.parse(saved) : null;
       return account?.email ? account : null;
     } catch {
       return null;
@@ -42,21 +52,34 @@ window.QRStudioAccount = {
   },
 
   async write(session) {
-    if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
-    await chrome.storage.local.set({
-      [this.STORAGE_KEY]: {
-        email: session?.user?.email || session?.email || '',
-        id: session?.user?.id || session?.id || '',
-        accessToken: session?.access_token || session?.accessToken || '',
-        refreshToken: session?.refresh_token || session?.refreshToken || '',
-        expiresAt: session?.expires_at || session?.expiresAt || 0,
-        signedInAt: Date.now()
-      }
-    });
+    const account = {
+      email: session?.user?.email || session?.email || '',
+      id: session?.user?.id || session?.id || '',
+      accessToken: session?.access_token || session?.accessToken || '',
+      refreshToken: session?.refresh_token || session?.refreshToken || '',
+      expiresAt: session?.expires_at || session?.expiresAt || 0,
+      signedInAt: Date.now()
+    };
+    if (this.hasStorage()) {
+      await chrome.storage.local.set({ [this.STORAGE_KEY]: account });
+      return;
+    }
+    try {
+      localStorage.setItem(`qr-studio-preview:${this.STORAGE_KEY}`, JSON.stringify(account));
+    } catch {
+      // Preview mode only.
+    }
   },
 
   async clear() {
-    if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
-    await chrome.storage.local.remove(this.STORAGE_KEY);
+    if (this.hasStorage()) {
+      await chrome.storage.local.remove(this.STORAGE_KEY);
+      return;
+    }
+    try {
+      localStorage.removeItem(`qr-studio-preview:${this.STORAGE_KEY}`);
+    } catch {
+      // Preview mode only.
+    }
   }
 };

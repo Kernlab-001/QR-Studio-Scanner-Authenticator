@@ -53,8 +53,7 @@ try {
         "pro.js",
         "account.html",
         "account.js",
-        "account-config.js",
-        "assets/brand-mark.png"
+        "account-config.js"
     )
 
     $iconDir = Join-Path $root "icons"

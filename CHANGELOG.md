@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.3] — 2026-10-27
+
+### Added
+
+- **The account system is live.** The extension is pointed at the account
+  server, so the sign-in page works: a new account, a sign in, and a sign out,
+  all without leaving the device.
+- The store screenshots and the gallery images are now 2560 x 1600, rendered at
+  twice the size instead of being scaled up afterwards.
+
+### Fixed
+
+- **The privacy policy and the support page now look like the extension.** They
+  used their own blue theme and a drawn mark; they use the extension's obsidian
+  surfaces, its coral accent and the real icon.
+- **Flipping the history switch no longer makes the panel jump.** The list is
+  left alone and only the note under the switch changes, so the setting simply
+  stays until you turn it off again.
+
 ## [2.3.2] — 2026-10-26
 
 ### Added
@@ -243,7 +262,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.2...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.3...HEAD
+[2.3.3]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.2.0...v2.3.0
