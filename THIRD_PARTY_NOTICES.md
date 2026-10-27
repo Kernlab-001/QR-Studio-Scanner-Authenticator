@@ -28,6 +28,17 @@ The upstream build of this library downloads its WebAssembly file from a public 
 `popup.js` overrides `locateFile` so the module is always read from `vendor/zxing/` inside the extension package,
 and no request ever leaves the machine.
 
+## Supabase JS client 2.118.0
+
+- Source: <https://github.com/supabase/supabase-js>
+- Distributed file: `vendor/supabase/supabase.js`
+- License: MIT License
+- Copyright: Supabase
+
+The account client is bundled locally and never loaded from a CDN, so no remote
+code is executed. It is only used to sign in and sign up against the account
+server named in `account-config.js`.
+
 Both distributed files retain their upstream copyright and licence header. `qrcode-generator.js` ships the original
 MIT header from Kazuhiko Arase; `jsqr.js` is a bundled build of jsQR 1.4.0 and carries an Apache-2.0 attribution
 header added at the top of the file. The bundled library code itself is unmodified.

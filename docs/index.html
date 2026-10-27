@@ -94,9 +94,12 @@
       </p>
 
       <div class="summary">
-        <p><strong>QR Studio never transmits, sells or shares any data, and collects nothing in
-        the background.</strong> The extension makes no network requests at all. Everything you
-        scan, create or store stays on your device, inside your own Chrome profile.</p>
+        <p><strong>QR Studio never transmits, sells or shares your QR data, and collects nothing in
+        the background.</strong> Everything you scan, create or store stays on your device, inside your
+        own Chrome profile.</p>
+        <p style="margin-top:10px">The only thing the extension ever sends anywhere is a sign-in
+        request to the account server, and only if you choose to create an account. There is no
+        telemetry, no analytics and no crash reporting.</p>
         <p style="margin-top:10px">The data you deliberately save &mdash; your authenticator secrets
         and your opt-in scan history &mdash; is stored <strong>locally only</strong>. It is never
         sent to us or to anyone else, because there is no server to send it to.</p>
@@ -104,7 +107,7 @@
 
       <h2>Data handling disclosure</h2>
       <p>Chrome Web Store requires every extension that handles user data to disclose it, even when
-      the data is stored only on the user's own device. QR Studio handles exactly two categories:</p>
+      the data is stored only on the user's own device. QR Studio handles exactly four categories:</p>
       <table>
         <thead>
           <tr><th>Data category</th><th>What it is</th><th>Purpose</th><th>Where it goes</th></tr>
@@ -132,6 +135,13 @@
             unlocked</td>
             <td><code>chrome.storage.local</code> on your device. Never transmitted.</td>
           </tr>
+          <tr>
+            <td><strong>Personal information</strong></td>
+            <td>The email address you sign in with, if you create an account</td>
+            <td><strong>App functionality</strong> &mdash; signing in, and remembering who you are</td>
+            <td>To the account server (Supabase) for authentication, and
+            <code>chrome.storage.local</code> on your device. Nothing else is sent with it.</td>
+          </tr>
         </tbody>
       </table>
       <p>No other data category is handled. Nothing is collected automatically, nothing is sent
@@ -154,7 +164,27 @@
         <li>It does not read, modify or transmit the content of web pages.</li>
         <li>It does not require an account, and there is nothing to sign up for.</li>
         <li>It does not use advertising or tracking identifiers.</li>
+        <li>The only request it ever makes is a sign-in request to the account server, and only when
+        you choose to sign in.</li>
       </ul>
+
+      <h2>Accounts</h2>
+      <p>The account is optional. Everything in QR Studio works without one &mdash; scanning, the
+      authenticator vault, the history and QR creation are free and need no sign-in.</p>
+      <p>If you create an account:</p>
+      <ul>
+        <li>Your <strong>email address and password go to the account server</strong> (Supabase), which
+        handles the sign-in. Your password is never stored by QR Studio and never passes through the
+        extension.</li>
+        <li>The extension keeps the signed-in <strong>email address and a session token</strong> in
+        <code>chrome.storage.local</code> on your device, so it can tell whether you are signed in.</li>
+        <li><strong>Nothing else is ever sent.</strong> No QR content, no vault secrets, no scan
+        history, no usage data. The extension never asks the account server anything about how you
+        use it.</li>
+        <li>Signing out removes the session from the device.</li>
+      </ul>
+      <p>Pro features need a licence key. The key is checked offline, so it works whether or not you
+      are signed in &mdash; the account only decides where you are sent when you click a Pro feature.</p>
       <p>The only network permission in the extension's manifest is <code>activeTab</code>, which
       Chrome grants on demand. It is used in exactly two ways, both triggered by an explicit click
       you make:</p>

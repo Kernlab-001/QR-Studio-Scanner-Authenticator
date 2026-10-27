@@ -169,6 +169,18 @@
           <input id="bulkImportInput" type="file" accept=".json,application/json,text/plain" hidden>
         </div>
 
+        <div class="account-card" id="accountCard">
+          <div class="account-card-head">
+            <b>Account</b>
+            <span class="account-state" id="accountState">Not signed in</span>
+          </div>
+          <p class="account-note" id="accountNote">Sign in to reach the Pro features. Everything else is free and needs no account.</p>
+          <div class="account-card-actions">
+            <button class="text-button" id="accountSignIn" type="button">Sign in</button>
+            <button class="text-button" id="accountSignOut" type="button" hidden>Sign out</button>
+          </div>
+        </div>
+
         <div class="pro-card" id="proCard">
           <div class="pro-card-head">
             <b>QR Studio Pro</b>
@@ -362,6 +374,7 @@
     <script src="jsqr.js"></script>
     <script src="qrcode-generator.js"></script>
     <script src="vendor/zxing/zxing-reader.js"></script>
+    <script src="account-config.js"></script>
     <script src="licence.js"></script>
     <script src="pro.js"></script>
     <script src="popup.js"></script>

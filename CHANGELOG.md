@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.2] — 2026-10-26
 
+### Added
+
+- **An account system.** You can create an account and sign in, and a Pro
+  feature now asks for one when it needs it: click *Bulk import* or *Batch*
+  without a licence key and you are sent to the sign-in page if you are not
+  signed in, or to the payment page if you are. A licence key still unlocks Pro
+  on its own, so that check stays offline. Every Pro feature goes through the
+  same gate, so adding one later is a one-line change.
+- The account page lives inside the extension, so the signed-in session stays
+  in the extension's own storage. The Supabase client is bundled locally and
+  is never loaded from a CDN.
+
 ### Fixed
 
 - **The authenticator code is no longer drawn inside a grey slab.** The code

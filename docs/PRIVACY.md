@@ -5,9 +5,13 @@
 
 ## Summary
 
-**QR Studio never transmits, sells or shares any data, and collects nothing in
-the background.** The extension makes no network requests at all. Everything you
-scan, create or store stays on your device, inside your own Chrome profile.
+**QR Studio never transmits, sells or shares your QR data, and collects nothing in
+the background.** Everything you scan, create or store stays on your device,
+inside your own Chrome profile.
+
+The only thing the extension ever sends anywhere is a sign-in request to the
+account server, and only if you choose to create an account. There is no
+telemetry, no analytics and no crash reporting.
 
 The data you deliberately save — your authenticator secrets and your opt-in
 scan history — is stored **locally only**. It is never sent to us or to anyone
@@ -17,13 +21,14 @@ else, because there is no server to send it to.
 
 Chrome Web Store requires every extension that handles user data to disclose it,
 even when the data is stored only on the user's own device. QR Studio handles
-exactly two categories:
+exactly three categories:
 
 | Data category | What it is | Purpose | Where it goes |
 |---|---|---|---|
 | **Authentication information** | The TOTP/HOTP secret, issuer, account name, algorithm, digits, period and counter of each authenticator you save in the vault | **App functionality** — generating your rotating codes | `chrome.storage.local` on your device. Never transmitted. |
 | **User activity** | The QR payloads you scan, when you turn on "Save general QR scans on this device" (off by default) | **App functionality** — showing your own scan history | `chrome.storage.local` on your device. Never transmitted. |
 | **Purchase information** | If you buy a Pro licence: the licence key you paste in, and the email address inside it | **App functionality** — proving that the paid features are unlocked | `chrome.storage.local` on your device. Never transmitted. |
+| **Personal information** | The email address you sign in with, if you create an account | **App functionality** — signing in, and remembering who you are | To the account server (Supabase) for authentication, and `chrome.storage.local` on your device. Nothing else is sent with it. |
 
 No other data category is handled. Nothing is collected automatically, nothing
 is sent anywhere, and no developer or third party can read it.
@@ -46,6 +51,8 @@ the data it stores.
 - It does not read, modify or transmit the content of web pages.
 - It does not require an account, and there is nothing to sign up for.
 - It does not use advertising or tracking identifiers.
+- The only request it ever makes is a sign-in request to the account server,
+  and only when you choose to sign in.
 
 The only network permission in the extension's manifest is `activeTab`, which
 Chrome grants on demand. It is used in exactly two ways, both triggered by an
@@ -81,6 +88,29 @@ creation. Both run entirely on your device.
 - Payment itself happens on the payment provider's own website, which is
   opened by you. The extension is not involved in the payment and never sees
   your card details.
+
+## Accounts
+
+The account is optional. Everything in QR Studio works without one — scanning,
+the authenticator vault, the history and QR creation are free and need no
+sign-in.
+
+If you create an account:
+
+- Your **email address and password go to the account server** (Supabase), which
+  handles the sign-in. Your password is never stored by QR Studio and never
+  passes through the extension.
+- The extension keeps the signed-in **email address and a session token** in
+  `chrome.storage.local` on your device, so it can tell whether you are signed
+  in.
+- **Nothing else is ever sent.** No QR content, no vault secrets, no scan
+  history, no usage data. The extension never asks the account server anything
+  about how you use it.
+- Signing out removes the session from the device.
+
+Pro features need a licence key. The key is checked offline, so it works
+whether or not you are signed in — the account only decides where you are sent
+when you click a Pro feature.
 
 ## Links to other pages
 
