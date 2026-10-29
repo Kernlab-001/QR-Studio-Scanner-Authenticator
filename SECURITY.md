@@ -6,8 +6,8 @@ Only the latest published version of QR Studio receives security fixes.
 
 | Version | Supported |
 | ------- | --------- |
-| 2.0.x   | ✅        |
-| < 2.0   | ❌        |
+| 2.4.x   | ✅        |
+| < 2.4.0   | ❌        |
 
 ## Reporting a vulnerability
 
