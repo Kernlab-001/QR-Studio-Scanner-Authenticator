@@ -1,7 +1,7 @@
 # Privacy Policy — QR Studio
 
 **Last updated:** 26 October 2026
-**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.4.0
+**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.4.1
 
 ## Summary
 

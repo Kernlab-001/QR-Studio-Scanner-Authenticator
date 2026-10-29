@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
   "name": "QR Studio — Scanner & Authenticator",
-  "version": "2.4.0",
+  "version": "2.4.1",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnVdO6Zn94/VBVZGAOb2mC+E7rWFNWIBnUPyYzsU8sLdWZ9i4dvp1YKXAzAwVneZjcLI5qOX0qUohYiW1H0RS7xkgXpSB9mbnsgVm/ZIf5zd46RtLZ4dG/3NVxhckvgksWWlQ9G1cxNUL2baeRXTAE0/lKF/ehrQ8n/fmRnyLJsKsSR+65p72EolUlW9hOiXwp1Ti5+ZY5y1DhdlXfC0OEZgLDQ4ytQO8+R0K6SNzeS4GBD9y4Z6nAxeSsZe6e+kh5HCfh1YEBrPTXJuAgp+gaHIEW0IhxuQ6sooZad2k1JHIPjpM6XKnXfPr1jK3bCc0s7oDvP81/cfegOJrc6BHRQIDAQAB",
   "description": "A local QR scanner, creator, history tool, and offline authenticator vault.",
   "permissions": ["storage", "activeTab", "identity"],
   "content_security_policy": {
