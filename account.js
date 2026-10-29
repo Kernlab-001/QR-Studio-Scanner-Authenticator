@@ -27,20 +27,71 @@
 
   let mode = 'signin';
   let client = null;
+  // True when the account was already signed in when this page was opened.
+  // Such a page is only there to be looked at, so it is never closed.
+  let signedInAtLoad = false;
 
   function say(text, kind = '') {
     message.textContent = text;
     message.className = `account-message${kind ? ` ${kind}` : ''}`;
   }
 
-  // The page the provider sends the browser back to. It only has to be an
-  // address the account server is allowed to redirect to.
+  // The address the provider sends the browser back to.
+  // Chrome's own redirect URL is used when it is available: it belongs to
+  // this extension, Chrome hands it straight back, and the session never
+  // reaches a web page.
   function redirectTarget() {
-    if (config.googleRedirectUrl) return config.googleRedirectUrl;
+    try {
+      if (chrome?.identity?.getRedirectURL) return chrome.identity.getRedirectURL();
+    } catch {
+      // Not an extension page.
+    }
     try {
       return chrome.runtime.getURL('account.html');
     } catch {
-      return new URL('account.html', window.location.href).href;
+      // Not an extension page either.
+    }
+    if (config.googleRedirectUrl) return config.googleRedirectUrl;
+    return new URL('account.html', window.location.href).href;
+  }
+
+  // Closes the tab this page is running in. Chrome refuses to close a tab
+  // that a script did not open itself, so the extension asks Chrome to remove
+  // the tab whenever it can.
+  async function closeTab() {
+    try {
+      if (chrome?.tabs?.getCurrent && chrome?.tabs?.remove) {
+        const tab = await chrome.tabs.getCurrent();
+        if (tab?.id) {
+          await chrome.tabs.remove(tab.id);
+          return;
+        }
+      }
+    } catch {
+      // Fall back to the ordinary way of closing a window.
+    }
+    try {
+      window.close();
+    } catch {
+      // Some browsers refuse to close a tab that was not opened by a script.
+    }
+  }
+
+  // A tab that was opened only to sign in closes itself when it is done.
+  function closeWhenDone(text) {
+    say(text, 'good');
+    setTimeout(closeTab, 900);
+  }
+
+  // True when the address this page was opened with carries a session that
+  // the provider has just handed over.
+  function sessionCameInUrl() {
+    try {
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      if (hash.get('access_token') || hash.get('refresh_token')) return true;
+      return Boolean(new URLSearchParams(window.location.search).get('code'));
+    } catch {
+      return false;
     }
   }
 
@@ -92,7 +143,7 @@
         if (error) throw error;
         if (data.session) {
           await persist(data.session);
-          say('Account created and signed in.', 'good');
+          closeWhenDone('Account created and signed in. This tab will close.');
         } else {
           say('Check your inbox and confirm the address, then sign in.', 'good');
           setMode('signin');
@@ -101,7 +152,7 @@
         const { data, error } = await client.auth.signInWithPassword({ email, password });
         if (error) throw error;
         await persist(data.session);
-        say('Signed in.', 'good');
+        closeWhenDone('Signed in. This tab will close.');
       }
     } catch (error) {
       say(explain(error), 'error');
@@ -189,7 +240,7 @@
           return;
         }
         await persist(session);
-        say('Signed in.', 'good');
+        closeWhenDone('Signed in with Google. This tab will close.');
         return;
       }
 
@@ -257,12 +308,19 @@
     // address, so it is picked up and stored.
     const session = await adoptSession();
     if (session) {
-      say('Signed in.', 'good');
+      // Only a session that actually arrived in this tab closes it. A page
+      // that was opened to look at an already signed-in account stays open.
+      if (sessionCameInUrl()) {
+        closeWhenDone('Signed in. This tab will close.');
+      } else {
+        signedInAtLoad = true;
+      }
       return;
     }
     const existing = await store.read();
     if (existing) {
       showSignedIn(existing);
+      signedInAtLoad = true;
       return;
     }
     showSignedOut();
@@ -276,9 +334,11 @@
   // If the sign-in happened in another tab, pick it up when this one comes
   // back to the front.
   window.addEventListener('focus', async () => {
-    if (!client || !signedOut.hidden) return;
+    if (!client || signedInAtLoad) return;
     const session = await adoptSession();
-    if (session) say('Signed in.', 'good');
+    // A session that was not here when the page opened means the sign-in
+    // happened elsewhere, so this tab has done its job.
+    if (session) closeWhenDone('Signed in. This tab will close.');
   });
   start();
 })();

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.3] — 2026-10-29
+
+### Fixed
+
+- **The account tab closes itself when you are signed in.** Signing in with an
+  email address, creating an account, or signing in with Google now ends the
+  sign-in tab instead of leaving it open on an empty form.
+- **The popup picks up the signed-in account right away.** It refreshes when
+  you bring the popup back to the front, and it also hears about the change
+  the moment the sign-in tab stores the session.
+- **The Google session never lands in a web page.** The sign-in now returns to
+  Chrome's own address for this extension, so the token is handed straight to
+  the extension and never appears in the address of a website.
+- A tab that was opened only to look at an already signed-in account is no
+  longer closed out from under you.
+- **The extension id was written down with one wrong character.** It is
+  `lknekpjhbdknomipogolenajkhjpokki`.
+
 ## [2.4.2] — 2026-10-29
 
 ### Fixed
@@ -30,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **The extension id no longer changes.** The manifest now carries the public
   key, so Chrome gives the extension the same id every time —
-  `lknekpjhbdknomipogelenajkhjpokki` — whether it is loaded unpacked, installed
+  `lknekpjhbdknomipogolenajkhjpokki` — whether it is loaded unpacked, installed
   from the signed package, or installed from the store. A copy you already have
   updates in place instead of arriving as a second extension.
 - The key in the manifest is the **public** half of the signing key. It is not a
