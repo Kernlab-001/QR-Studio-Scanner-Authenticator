@@ -25,17 +25,19 @@ if (!existsSync(privatePath)) {
 }
 
 const email = argument('email');
-const months = Number(argument('months', '12'));
+const forever = process.argv.includes('--forever');
+const months = Number(argument('months', forever ? '0' : '12'));
 const seats = Number(argument('seats', '1'));
 const plan = argument('plan', 'pro');
 
 if (!email) {
-  console.error('Usage: node tools/sign-licence.mjs --email someone@example.com [--months 12] [--seats 1]');
+  console.error('Usage: node tools/sign-licence.mjs --email someone@example.com [--months 12] [--forever] [--seats 1]');
   process.exit(1);
 }
 
 const issuedAt = new Date();
-const expiresAt = new Date(issuedAt.getTime() + months * 30 * 24 * 60 * 60 * 1000);
+const perpetual = forever || months <= 0;
+const expiresAt = perpetual ? null : new Date(issuedAt.getTime() + months * 30 * 24 * 60 * 60 * 1000);
 
 const payload = {
   v: 1,
@@ -43,7 +45,7 @@ const payload = {
   email,
   seats,
   issued: issuedAt.toISOString(),
-  exp: expiresAt.toISOString(),
+  exp: expiresAt ? expiresAt.toISOString() : null,
   nonce: Math.random().toString(36).slice(2, 12)
 };
 
@@ -59,4 +61,4 @@ console.log(key);
 console.log('');
 console.log(`email    : ${email}`);
 console.log(`seats    : ${seats}`);
-console.log(`expires  : ${expiresAt.toISOString().slice(0, 10)}`);
+console.log(`expires  : ${expiresAt ? expiresAt.toISOString().slice(0, 10) : 'never'}`);

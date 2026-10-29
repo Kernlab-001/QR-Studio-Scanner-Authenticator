@@ -104,8 +104,7 @@
         say('Signed in.', 'good');
       }
     } catch (error) {
-      const text = String(error?.message || error);
-      say(text.includes('Invalid login credentials') ? 'That email and password do not match.' : text, 'error');
+      say(explain(error), 'error');
     } finally {
       submitButton.disabled = false;
       submitButton.textContent = mode === 'signup' ? 'Create account' : 'Sign in';
@@ -124,12 +123,43 @@
     signedInMessage.textContent = 'Signed out.';
   }
 
+  // Google's sign-in is only worth opening if the account server has it
+  // switched on, otherwise the browser ends up on an error page.
+  async function googleIsEnabled() {
+    try {
+      const response = await fetch(`${config.supabaseUrl}/auth/v1/settings`, {
+        headers: { apikey: config.supabaseAnonKey }
+      });
+      if (!response.ok) return true;
+      const settings = await response.json();
+      return settings?.external?.google !== false;
+    } catch {
+      return true;
+    }
+  }
+
+  function explain(error) {
+    const text = String(error?.message || error || '');
+    if (text.includes('Invalid login credentials')) return 'That email and password do not match.';
+    if (text.includes('Email not confirmed')) return 'This account still needs its email address confirmed.';
+    if (text.includes('User already registered')) return 'That address already has an account - try signing in.';
+    if (text.includes('rate limit') || text.includes('over_email_send_rate_limit')) {
+      return 'The account server cannot send confirmation emails right now. Use Google sign-in, or ask the maintainer to turn auto-confirm on.';
+    }
+    if (text.includes('Failed to fetch')) return 'The account server could not be reached. Check your connection.';
+    return text;
+  }
+
   // Google sign-in. The provider sends the browser back to the redirect page
   // with the session in the address, and the account page picks it up from
   // there, so the session ends up in the extension's own storage.
   async function signInWithGoogle() {
     if (!client) {
       say('The account server is not configured yet.', 'error');
+      return;
+    }
+    if (!(await googleIsEnabled())) {
+      say('Google sign-in is not switched on for this account server yet.', 'error');
       return;
     }
     googleButton.disabled = true;
@@ -168,7 +198,7 @@
       window.open(data.url, '_blank', 'noopener,noreferrer');
       say('Finish the sign-in in the new tab, then come back here.', 'good');
     } catch (error) {
-      say(String(error?.message || error), 'error');
+      say(explain(error), 'error');
     } finally {
       googleButton.disabled = false;
       googleButton.textContent = '';

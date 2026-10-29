@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.2] — 2026-10-29
+
+### Fixed
+
+- **The account page says what went wrong instead of looking stuck.** "That email
+  and password do not match", "This account still needs its email address
+  confirmed", "That address already has an account - try signing in", and a
+  plain message when the account server cannot be reached.
+- The Google button now checks that Google sign-in is actually switched on for
+  the account server before it opens a window that could only show an error
+  page.
+
+### Changed
+
+- `tools/sign-licence.mjs` takes `--forever`, for a licence that never
+  expires.
+
 ## [2.4.1] — 2026-10-27
 
 ### Fixed
@@ -289,7 +306,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.2...HEAD
+[2.4.2]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.3...v2.4.0
 [2.3.3]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.2...v2.3.3
