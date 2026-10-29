@@ -293,6 +293,55 @@ entitlement is part of the session they sign in with.
 A licence key still works on its own, without an account. The two are
 alternatives: either one unlocks Pro.
 
+### Licence terms
+
+There are two kinds of licence, and both carry their own end date.
+
+**A Pro licence** is what a buyer ends up with. It is issued for a month or a
+year, and it is checked on the device with the public key alone:
+
+```bash
+node tools/sign-licence.mjs --email buyer@example.com --months 1    # a month
+node tools/sign-licence.mjs --email buyer@example.com --months 12   # a year
+node tools/sign-licence.mjs --email buyer@example.com --forever    # never ends
+```
+
+**A claim licence** is the short-lived one a buyer is handed after paying. It
+lasts fifteen minutes, every one issued is different, and it is not a Pro
+licence: it has to be exchanged for a Pro entitlement on the buyer's account,
+which is what actually lasts.
+
+```bash
+node tools/issue-claim-licence.mjs --email buyer@example.com
+```
+
+It can also be imported, so the same code can sit inside whatever already
+handles the payment confirmation:
+
+```js
+import { issueClaimLicence } from './tools/issue-claim-licence.mjs';
+const { key } = issueClaimLicence({ email });
+```
+
+**The signing key never leaves the machine that holds it.** The extension
+carries the public half only, so it can check a licence but cannot make one.
+Anything that issues a licence has to run where the private key is: a small
+server, a webhook handler, a scheduled job.
+
+### When a licence runs out
+
+Both kinds end on their own, with nothing to remember to do:
+
+- The extension checks the end date every time it looks, so a licence that
+  has run out stops counting the moment it does.
+- A licence that has run out is **taken out of the profile**, so it is not
+  left lying in the Chrome data.
+- A Pro account that has run out is not Pro any more. The end date travels
+  with the session, so no request is needed to notice it.
+
+The account server is the same way round: a Pro account carries
+`qrstudio_pro_expires`, and the same end date applies there.
+
 ---
 
 ## Contributing

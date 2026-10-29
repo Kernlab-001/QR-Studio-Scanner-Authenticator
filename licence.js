@@ -82,7 +82,15 @@
       const value = stored?.[STORAGE_KEY];
       if (!value?.key) return null;
       const result = await verify(value.key);
-      cached = result.ok ? result.payload : null;
+      if (!result.ok) {
+        // A licence that has run out, or one that can never be used, is
+        // taken out of the profile straight away. Nothing is left behind
+        // that could be used later.
+        await store.remove(STORAGE_KEY);
+        cached = null;
+        return null;
+      }
+      cached = result.payload;
       return cached;
     } catch {
       return null;
