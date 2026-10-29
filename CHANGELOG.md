@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.6] — 2026-10-29
+
+### Fixed
+
+- **A licence that has run out now stops counting the moment it does.** The
+  end date is checked every time the Pro features are looked at, so a licence
+  that ends while the page is open no longer unlocks anything.
+- **A licence that has run out is taken out of the profile.** Nothing is left
+  behind in the Chrome data that could be used later, and it is taken out
+  when the page is opened again as well.
+- **A Pro account that has run out is not Pro any more.** The end date
+  travels with the session, so no request is needed to notice it.
+
+### Added
+
+- `tools/issue-claim-licence.mjs` issues the short-lived licence a buyer is
+  given after paying. It lasts fifteen minutes, every one issued is
+  different, and it can be imported so the same code can sit inside whatever
+  handles the payment confirmation. It is deliberately not a Pro licence: it
+  has to be exchanged for a Pro entitlement on the buyer's account.
+
 ## [2.4.5] — 2026-10-29
 
 ### Fixed

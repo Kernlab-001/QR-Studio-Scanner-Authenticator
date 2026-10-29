@@ -32,6 +32,7 @@ const state = {
   creatorMode: 'single',
   licence: null,
   account: null,
+  proActive: false,
   toastTimer: null
 };
 
@@ -1097,8 +1098,18 @@ async function signOutAccount() {
 // The licence is checked offline, so the free features never depend on a
 // server and the paid ones unlock without a sign-in. A Pro account carries
 // the same entitlement, so for those the sign-in is enough.
+//
+// Both kinds carry their own end date, and both are checked here, so a
+// licence that has run out stops counting the moment it does rather than
+// the next time the page is opened.
 function isPro() {
-  return Boolean(state.licence) || Boolean(state.account?.pro);
+  if (state.licence) {
+    if (!state.licence.exp || new Date(state.licence.exp).getTime() > Date.now()) return true;
+  }
+  const account = state.account;
+  if (!account?.pro) return false;
+  if (account.proExpiresAt && account.proExpiresAt <= Date.now()) return false;
+  return true;
 }
 
 async function refreshLicence() {
@@ -1112,6 +1123,7 @@ async function refreshLicence() {
 
 function renderProState() {
   const pro = isPro();
+  state.proActive = pro;
   const licence = state.licence;
   ui.proCard.classList.toggle('is-pro', pro);
   ui.proState.textContent = pro ? 'Pro' : 'Free';
@@ -2288,8 +2300,12 @@ function bindEvents() {
   $('#accountSignIn').addEventListener('click', openAccountPage);
   $('#accountSignOut').addEventListener('click', signOutAccount);
   // The sign-in happens in its own tab, so the popup picks the session up
-  // again as soon as it comes back to the front.
-  window.addEventListener('focus', () => { renderAccountState(); });
+  // again as soon as it comes back to the front. The licence is read again
+  // too, so one that has run out is taken out of the profile.
+  window.addEventListener('focus', () => {
+    renderAccountState();
+    refreshLicence();
+  });
   // The account tab writes the session into the extension's own storage, so
   // the popup hears about it straight away, even while it stays open.
   try {
@@ -2389,6 +2405,9 @@ function bindEvents() {
 setInterval(() => {
   state.accountUpdaters.forEach((update) => update());
   if (state.resultUpdater) state.resultUpdater();
+  // A licence or a Pro account can run out while the page is open, so the
+  // panel follows the clock rather than the page.
+  if (isPro() !== state.proActive) renderProState();
 }, 1000);
 bindEvents();
 setSource('tab');
