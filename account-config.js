@@ -16,10 +16,18 @@ window.QRStudioAccountConfig = {
 
   // Where Google sends the browser back to after a sign-in. The session comes
   // back in the address, and the extension picks it up from there.
-  // Inside the extension this is Chrome's own redirect address, which has to
-  // be in the account server's redirect list:
-  //   https://<extension id>.chromiumapp.org/
-  // This value below is only used when the account page runs outside the
+  //
+  // Inside the extension this is Chrome's own redirect address for this
+  // extension. It has to be on the account server's redirect list, or the
+  // sign-in is sent to the account server's site address instead and never
+  // reaches the extension:
+  //   https://lknekpjhbdknomipogolenajkhjpokki.chromiumapp.org/
+  //
+  // Add it under Authentication -> URL Configuration -> Redirect URLs. Get
+  // the address from chrome.identity.getRedirectURL() in the extension, so
+  // the id is always spelled right.
+  //
+  // The value below is only used when the account page runs outside the
   // extension, for example while working on it.
   googleRedirectUrl: 'https://kernlab-001.github.io/QR-Studio-Scanner-Authenticator/support.html',
 

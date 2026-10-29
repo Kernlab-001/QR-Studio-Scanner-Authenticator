@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.4] — 2026-10-29
+
+### Fixed
+
+- **The Google sign-in window opens in the same moment as the click.** The
+  address is built by hand now, so there is no round trip to the account server
+  between the click and the window. Chrome only allows an interactive sign-in
+  window straight after the gesture that started it.
+- **A sign-in window that cannot open now says what to do.** Instead of
+  "Authorization page could not be loaded", the account page explains that
+  something is blocking the window and points at signing in with an email
+  address instead.
+- The account server's redirect list is written down in the README, with the
+  exact address to add and how to get it. A sign-in that is missing from that
+  list never reaches the extension, because the account server sends it to its
+  own site address instead.
+
+### Changed
+
+- The Google sign-in address is checked once when the account page opens
+  rather than on every click, so the check never sits in the way of the
+  sign-in window.
+
 ## [2.4.3] — 2026-10-29
 
 ### Fixed

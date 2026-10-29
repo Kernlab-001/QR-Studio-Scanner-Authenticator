@@ -245,6 +245,31 @@ vendor file fails fast instead of silently breaking scanning.
 - Chrome 88+ (Manifest V3). The tab-capture source needs a recent build.
 - `chrome://extensions` → **Developer mode** → **Load unpacked**.
 
+### Account server setup
+
+The account system is optional, but if you point the extension at an account
+server of your own there is one setting that is easy to miss.
+
+Under **Authentication → URL Configuration → Redirect URLs** on the account
+server, add Chrome's redirect address for this extension:
+
+```
+https://<extension id>.chromiumapp.org/
+```
+
+Get the exact address by opening the account page in the extension and running
+`chrome.identity.getRedirectURL()` in the console, or by copying it from
+`account-config.js`. It always ends in `.chromiumapp.org/` and the id in the
+middle must match the extension's id exactly.
+
+Without that entry the account server sends the sign-in to its own site
+address instead of back to the extension, the sign-in never completes, and the
+account page reports that the authorization page could not be loaded.
+
+Set the account server's **Site URL** to a real page as well. It is where the
+account server sends the browser when something goes wrong, and the default
+`http://localhost:3000` is not a page anyone can see.
+
 ---
 
 ## Contributing
