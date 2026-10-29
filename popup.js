@@ -2267,6 +2267,18 @@ function bindEvents() {
   $('#generateBatch').addEventListener('click', generateBatchCodes);
   $('#accountSignIn').addEventListener('click', openAccountPage);
   $('#accountSignOut').addEventListener('click', signOutAccount);
+  // The sign-in happens in its own tab, so the popup picks the session up
+  // again as soon as it comes back to the front.
+  window.addEventListener('focus', () => { renderAccountState(); });
+  // The account tab writes the session into the extension's own storage, so
+  // the popup hears about it straight away, even while it stays open.
+  try {
+    chrome.storage?.onChanged?.addListener((changes, area) => {
+      if (area === 'local' && changes?.qrStudioAccount) renderAccountState();
+    });
+  } catch {
+    // Preview mode: the storage listener is not there.
+  }
   $('#showManualForm').addEventListener('click', openManualForm);
   $('#hideManualForm').addEventListener('click', closeManualForm);
   $('#parseManualUri').addEventListener('click', parseManualUri);
