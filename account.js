@@ -175,18 +175,26 @@
   }
 
   // Google's sign-in is only worth opening if the account server has it
-  // switched on, otherwise the browser ends up on an error page.
+  // switched on, otherwise the browser ends up on an error page. The answer
+  // is kept, so the check never sits between the click and the sign-in
+  // window, which has to open while the click is still fresh.
+  let googleEnabled = null;
   async function googleIsEnabled() {
+    if (googleEnabled !== null) return googleEnabled;
     try {
       const response = await fetch(`${config.supabaseUrl}/auth/v1/settings`, {
         headers: { apikey: config.supabaseAnonKey }
       });
-      if (!response.ok) return true;
+      if (!response.ok) {
+        googleEnabled = true;
+        return googleEnabled;
+      }
       const settings = await response.json();
-      return settings?.external?.google !== false;
+      googleEnabled = settings?.external?.google !== false;
     } catch {
-      return true;
+      googleEnabled = true;
     }
+    return googleEnabled;
   }
 
   function explain(error) {
@@ -201,6 +209,32 @@
     return text;
   }
 
+  // The sign-in address is built here rather than asked for, so the window
+  // can be opened in the same moment as the click. Chrome only allows an
+  // interactive sign-in window straight after the gesture that started it,
+  // and a round trip to the account server in between would use it up.
+  function googleSignInUrl() {
+    const url = new URL(`${config.supabaseUrl}/auth/v1/authorize`);
+    url.searchParams.set('provider', 'google');
+    url.searchParams.set('redirect_to', redirectTarget());
+    url.searchParams.set('apikey', config.supabaseAnonKey);
+    return url.toString();
+  }
+
+  function explainGoogleError(error) {
+    const text = String(error?.message || error || '');
+    if (text.includes('Authorization page could not be loaded')) {
+      return 'Your browser could not open the Google sign-in window. Something is blocking it - a pop-up blocker, an ad blocker, or a strict privacy setting. Allow pop-ups for QR Studio and try again, or sign in with your email address below.';
+    }
+    if (text.includes('User interaction required')) {
+      return 'The sign-in window could not be opened from that click. Please click "Continue with Google" again.';
+    }
+    if (text.includes('closed the flow') || text.includes('canceled') || text.includes('cancelled')) {
+      return 'The sign-in was cancelled.';
+    }
+    return explain(error);
+  }
+
   // Google sign-in. The provider sends the browser back to the redirect page
   // with the session in the address, and the account page picks it up from
   // there, so the session ends up in the extension's own storage.
@@ -209,53 +243,49 @@
       say('The account server is not configured yet.', 'error');
       return;
     }
-    if (!(await googleIsEnabled())) {
-      say('Google sign-in is not switched on for this account server yet.', 'error');
-      return;
-    }
     googleButton.disabled = true;
     googleButton.textContent = 'Opening Google…';
+    let returned = null;
     try {
-      const { data, error } = await client.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: redirectTarget(), skipBrowserRedirect: true }
-      });
-      if (error) throw error;
-      if (!data?.url) throw new Error('Google sign-in could not be started.');
-
       // In the extension, the sign-in runs in a window that Chrome hands back
-      // to us, so the session never touches a web page. Chrome watches for
-      // the redirect address, so it is spelled out for it as well.
+      // to us, so the session never touches a web page.
       if (chrome?.identity?.launchWebAuthFlow) {
-        const authUrl = new URL(data.url);
-        authUrl.searchParams.set('redirect_uri', redirectTarget());
-        const returned = await chrome.identity.launchWebAuthFlow({ url: authUrl.toString(), interactive: true });
-        if (!returned) {
-          say('The sign-in was cancelled.', 'error');
-          return;
-        }
-        const session = await sessionFromUrl(returned);
-        if (!session) {
-          say('Google did not return a session. Please try again.', 'error');
-          return;
-        }
-        await persist(session);
-        closeWhenDone('Signed in with Google. This tab will close.');
+        returned = await chrome.identity.launchWebAuthFlow({ url: googleSignInUrl(), interactive: true });
+      } else {
+        // Outside the extension, the browser opens and comes back to this page,
+        // which picks the session up from the address.
+        window.open(googleSignInUrl(), '_blank', 'noopener,noreferrer');
+        say('Finish the sign-in in the new tab, then come back here.', 'good');
         return;
       }
-
-      // Outside the extension, the browser opens and comes back to this page,
-      // which picks the session up from the address.
-      window.open(data.url, '_blank', 'noopener,noreferrer');
-      say('Finish the sign-in in the new tab, then come back here.', 'good');
     } catch (error) {
-      say(explain(error), 'error');
+      let message = explainGoogleError(error);
+      if (!(await googleIsEnabled())) {
+        message = 'Google sign-in is not switched on for this account server yet. Sign in with your email address below.';
+      }
+      say(message, 'error');
+      return;
     } finally {
       googleButton.disabled = false;
       googleButton.textContent = '';
       googleButton.append(
         Object.assign(document.createElement('span'), { textContent: 'Continue with Google' })
       );
+    }
+    try {
+      if (!returned) {
+        say('The sign-in was cancelled.', 'error');
+        return;
+      }
+      const session = await sessionFromUrl(returned);
+      if (!session) {
+        say('Google did not return a session. Please try again.', 'error');
+        return;
+      }
+      await persist(session);
+      closeWhenDone('Signed in with Google. This tab will close.');
+    } catch (error) {
+      say(explain(error), 'error');
     }
   }
 
@@ -304,6 +334,9 @@
     client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, detectSessionInUrl: true }
     });
+    // Ask the account server whether Google sign-in is switched on, so the
+    // answer is ready before the button is pressed.
+    googleIsEnabled();
     // A sign-in that came back from Google lands here with the session in the
     // address, so it is picked up and stored.
     const session = await adoptSession();
