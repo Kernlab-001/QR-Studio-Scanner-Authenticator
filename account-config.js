@@ -45,6 +45,17 @@ window.QRStudioAccountConfig.configured = Boolean(
 
 // The signed-in account is kept in the extension's own storage. The popup
 // only ever reads it, so it never has to load the Supabase client itself.
+//
+// Whether an account is a Pro account is part of the signed-in session: the
+// account server puts it in the session's own details, so finding out costs
+// no extra request.
+function proEntitlement(metadata) {
+  if (!metadata?.qrstudio_pro) return { pro: false, expiresAt: 0 };
+  const raw = metadata.qrstudio_pro_expires || 0;
+  const expiresAt = typeof raw === 'number' ? raw * 1000 : (raw ? (Date.parse(raw) || 0) : 0);
+  return { pro: !expiresAt || expiresAt > Date.now(), expiresAt };
+}
+
 window.QRStudioAccount = {
   STORAGE_KEY: 'qrStudioAccount',
 
@@ -69,13 +80,17 @@ window.QRStudioAccount = {
   },
 
   async write(session) {
+    const metadata = session?.user?.user_metadata || session?.user_metadata || {};
+    const entitlement = proEntitlement(metadata);
     const account = {
       email: session?.user?.email || session?.email || '',
       id: session?.user?.id || session?.id || '',
       accessToken: session?.access_token || session?.accessToken || '',
       refreshToken: session?.refresh_token || session?.refreshToken || '',
       expiresAt: session?.expires_at || session?.expiresAt || 0,
-      signedInAt: Date.now()
+      signedInAt: Date.now(),
+      pro: entitlement.pro,
+      proExpiresAt: entitlement.expiresAt
     };
     if (this.hasStorage()) {
       await chrome.storage.local.set({ [this.STORAGE_KEY]: account });

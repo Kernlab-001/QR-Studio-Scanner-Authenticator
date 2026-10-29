@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.5] — 2026-10-29
+
+### Fixed
+
+- **An account that includes Pro opens the Pro features straight away.** Bulk
+  import and batch QR creation now open without a licence key and without the
+  support page being opened first.
+- The Pro panel says which Pro you have: a licence key, or an account that
+  includes Pro.
+
+### Changed
+
+- The account panel says "Signed in. This account includes QR Studio Pro." for
+  an account that includes Pro, and keeps the licence key wording for one that
+  does not.
+
 ## [2.4.4] — 2026-10-29
 
 ### Fixed
