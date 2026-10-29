@@ -85,6 +85,31 @@ jobs:
             console.log('local-only promise intact - permissions:', perms.join(', ') || 'none');
           "
 
+      - name: Check the code only asks for what the policy allows
+        run: |
+          node -e "
+            const fs = require('fs');
+            // The policy only lets the extension talk to itself and to the
+            // account server. A request to anything else - a data address,
+            // for instance - is refused by the browser, and the feature that
+            // needed it fails without saying why.
+            const shipped = ['popup.js', 'pro.js', 'account.js', 'account-config.js', 'licence.js'];
+            const offenders = [];
+            for (const file of shipped) {
+              const source = fs.readFileSync(file, 'utf8');
+              source.split('\n').forEach((line, index) => {
+                if (!/\bfetch\s*\(/.test(line)) return;
+                // The account server is the one remote the extension may ask.
+                if (/supabaseUrl|supabase\.co/.test(line)) return;
+                offenders.push(file + ':' + (index + 1) + ' ' + line.trim());
+              });
+            }
+            if (offenders.length) {
+              throw new Error('these requests are not allowed by the policy:\n  ' + offenders.join('\n  '));
+            }
+            console.log('every request the code makes is one the policy allows');
+          "
+
       - name: Check vendored libraries keep their licence headers
         run: |
           for lib in jsqr.js qrcode-generator.js; do

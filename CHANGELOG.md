@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.7] — 2026-10-29
+
+### Fixed
+
+- **Scanning a QR code from the current tab works again.** It said "Could not
+  scan this tab" and gave no reason at all. It now reads the page and decodes
+  the code, the way it always did. This also covers the page behind a setup
+  code for an authenticator.
+
 ## [2.4.6] — 2026-10-29
 
 ### Fixed

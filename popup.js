@@ -640,6 +640,25 @@ async function scanImageFile(file) {
   }
 }
 
+// The screenshot of the tab comes back as a data address. It is turned into
+// bytes by hand rather than fetched, because the extension's own policy only
+// lets it talk to itself and to the account server, and a data address is
+// neither.
+async function bitmapFromCapture(url) {
+  const address = String(url || '');
+  if (!address.startsWith('data:')) {
+    throw new Error('The tab screenshot did not come back in a form this extension can read.');
+  }
+  const comma = address.indexOf(',');
+  const header = address.slice(0, comma);
+  const payload = address.slice(comma + 1);
+  const binary = header.includes(';base64') ? atob(payload) : decodeURIComponent(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  const type = /data:([^;,]+)/.exec(header)?.[1] || 'image/png';
+  return createImageBitmap(new Blob([bytes], { type }));
+}
+
 async function scanCurrentTab() {
   stopCamera();
   if (typeof chrome === 'undefined' || !chrome.tabs?.captureVisibleTab) {
@@ -650,8 +669,7 @@ async function scanCurrentTab() {
   setScannerStatus('Scanning tab…', 'scanning');
   try {
     const dataUrl = await chrome.tabs.captureVisibleTab(undefined, { format: 'png' });
-    const response = await fetch(dataUrl);
-    const bitmap = await createImageBitmap(await response.blob());
+    const bitmap = await bitmapFromCapture(dataUrl);
     try {
       showScanPreview(bitmap);
       const values = await decodeSource(bitmap, { multi: true });
