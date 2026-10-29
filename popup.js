@@ -31,6 +31,7 @@ const state = {
   creatorStyle: { ecl: 'M', shape: 'square', foreground: '#090d1c', background: '#ffffff', margin: 0, size: 512 },
   creatorMode: 'single',
   licence: null,
+  account: null,
   toastTimer: null
 };
 
@@ -111,6 +112,7 @@ const ui = {
   proActivate: $('#proActivate'),
   proCardFoot: $('#proCardFoot'),
   proLicenceInfo: $('#proLicenceInfo'),
+  removeLicence: $('#removeLicence'),
   licenceInput: $('#licenceInput'),
   bulkImport: $('#bulkImport'),
   bulkImportPanel: $('#bulkImportPanel'),
@@ -1018,7 +1020,8 @@ function renderExtraResults(rawValues) {
 /* ------------------------------------------------------------------ pro */
 
 // Every Pro feature is listed here, so a new one routes through the same
-// gate: no licence key -> sign in first, signed in -> go and pay.
+// gate: a licence key or a Pro account opens it, an account without Pro goes
+// to the support page, and no account opens the sign-in page first.
 const PRO_FEATURES = {
   'bulk-import': { label: 'Bulk import' },
   batch: { label: 'Batch QR creation' }
@@ -1056,7 +1059,8 @@ function openPaymentPage() {
 async function allowProFeature(featureId) {
   const feature = PRO_FEATURES[featureId];
   if (isPro()) return true;
-  const account = await window.QRStudioAccount?.read();
+  const account = state.account || await window.QRStudioAccount?.read();
+  state.account = account || null;
   if (!account?.email) {
     showToast(`${feature?.label || 'This feature'} needs an account. Signing in now.`);
     openAccountPage();
@@ -1069,13 +1073,19 @@ async function allowProFeature(featureId) {
 
 async function renderAccountState() {
   const account = await window.QRStudioAccount?.read();
+  state.account = account || null;
   const signedIn = Boolean(account?.email);
   ui.accountState.textContent = signedIn ? account.email : 'Not signed in';
   ui.accountSignIn.hidden = signedIn;
   ui.accountSignOut.hidden = !signedIn;
-  ui.accountNote.textContent = signedIn
-    ? 'Signed in. A licence key is what unlocks the Pro features.'
-    : 'Sign in to reach the Pro features. Everything else is free and needs no account.';
+  if (!signedIn) {
+    ui.accountNote.textContent = 'Sign in to reach the Pro features. Everything else is free and needs no account.';
+  } else if (account.pro) {
+    ui.accountNote.textContent = 'Signed in. This account includes QR Studio Pro.';
+  } else {
+    ui.accountNote.textContent = 'Signed in. A licence key is what unlocks the Pro features.';
+  }
+  renderProState();
 }
 
 async function signOutAccount() {
@@ -1085,9 +1095,10 @@ async function signOutAccount() {
 }
 
 // The licence is checked offline, so the free features never depend on a
-// server and the paid ones unlock without a sign-in.
+// server and the paid ones unlock without a sign-in. A Pro account carries
+// the same entitlement, so for those the sign-in is enough.
 function isPro() {
-  return Boolean(state.licence);
+  return Boolean(state.licence) || Boolean(state.account?.pro);
 }
 
 async function refreshLicence() {
@@ -1101,14 +1112,23 @@ async function refreshLicence() {
 
 function renderProState() {
   const pro = isPro();
+  const licence = state.licence;
   ui.proCard.classList.toggle('is-pro', pro);
   ui.proState.textContent = pro ? 'Pro' : 'Free';
   ui.proActivate.hidden = pro;
   ui.proCardFoot.hidden = !pro;
+  ui.removeLicence.hidden = !licence;
   if (pro) {
-    const seats = Number(state.licence.seats || 1);
-    const expiry = state.licence.exp ? new Date(state.licence.exp).toISOString().slice(0, 10) : 'no expiry';
-    ui.proLicenceInfo.textContent = `${state.licence.email || 'Licensed'} · ${seats} seat${seats === 1 ? '' : 's'} · until ${expiry}`;
+    if (licence) {
+      const seats = Number(licence.seats || 1);
+      const expiry = licence.exp ? new Date(licence.exp).toISOString().slice(0, 10) : 'no expiry';
+      ui.proLicenceInfo.textContent = `${licence.email || 'Licensed'} · ${seats} seat${seats === 1 ? '' : 's'} · until ${expiry}`;
+    } else {
+      const until = state.account?.proExpiresAt
+        ? new Date(state.account.proExpiresAt).toISOString().slice(0, 10)
+        : 'no expiry';
+      ui.proLicenceInfo.textContent = `Pro account · ${state.account?.email || ''} · until ${until}`;
+    }
     ui.proLicenceInfo.title = ui.proLicenceInfo.textContent;
     ui.proNote.textContent = 'Pro is active. Bulk import and batch QR creation are unlocked.';
   } else {

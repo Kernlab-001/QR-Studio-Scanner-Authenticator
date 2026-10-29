@@ -270,6 +270,29 @@ Set the account server's **Site URL** to a real page as well. It is where the
 account server sends the browser when something goes wrong, and the default
 `http://localhost:3000` is not a page anyone can see.
 
+### Granting Pro to an account
+
+An account can include QR Studio Pro. The entitlement is written into the
+account's own details on the account server, which are part of the signed-in
+session, so the extension finds out without asking the server anything extra.
+
+```bash
+export SUPABASE_SERVICE_KEY='your-service-role-key'
+node tools/grant-pro.mjs --email someone@example.com --months 12
+node tools/grant-pro.mjs --email someone@example.com --forever
+node tools/grant-pro.mjs --email someone@example.com --revoke
+```
+
+The service role key is the secret key from the account server dashboard, under
+**Project Settings → API → service_role**. The tool reads it from the
+environment so it never lands in the repository.
+
+The person has to **sign out and sign in again** afterwards, because the
+entitlement is part of the session they sign in with.
+
+A licence key still works on its own, without an account. The two are
+alternatives: either one unlocks Pro.
+
 ---
 
 ## Contributing
