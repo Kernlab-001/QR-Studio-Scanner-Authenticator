@@ -80,6 +80,9 @@ async function findUser(address) {
     const response = await fetch(`${url}/auth/v1/admin/users?page=${page}&per_page=${perPage}`, { headers });
     if (!response.ok) {
       const body = await response.text();
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('The account server rejected the service role key. Check SUPABASE_SERVICE_KEY.');
+      }
       throw new Error(`The account server refused the request (${response.status}): ${body}`);
     }
     const users = await response.json();
@@ -90,45 +93,54 @@ async function findUser(address) {
   return null;
 }
 
-const user = await findUser(email);
-if (!user) {
-  console.error(`No account with the address ${email} exists on ${url}.`);
-  console.error('The account has to be created first, by signing in.');
-  process.exit(1);
-}
+async function main() {
+  const user = await findUser(email);
+  if (!user) {
+    console.error(`No account with the address ${email} exists on ${url}.`);
+    console.error('The account has to be created first, by signing in.');
+    process.exit(1);
+  }
 
-const metadata = { ...(user.user_metadata || {}) };
-if (revoke) {
-  delete metadata.qrstudio_pro;
-  delete metadata.qrstudio_pro_expires;
-} else {
-  metadata.qrstudio_pro = true;
-  if (forever || months <= 0) {
+  const metadata = { ...(user.user_metadata || {}) };
+  if (revoke) {
+    delete metadata.qrstudio_pro;
     delete metadata.qrstudio_pro_expires;
   } else {
-    metadata.qrstudio_pro_expires = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString();
+    metadata.qrstudio_pro = true;
+    if (forever || months <= 0) {
+      delete metadata.qrstudio_pro_expires;
+    } else {
+      metadata.qrstudio_pro_expires = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
   }
+
+  const response = await fetch(`${url}/auth/v1/admin/users/${user.id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ user_metadata: metadata })
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    console.error(`The account server refused the change (${response.status}): ${body}`);
+    process.exit(1);
+  }
+
+  console.log(revoke ? `Pro removed from ${email}.` : `Pro granted to ${email}.`);
+  console.log('');
+  console.log(`account  : ${email}`);
+  console.log(`user id  : ${user.id}`);
+  if (!revoke) {
+    const until = metadata.qrstudio_pro_expires ? metadata.qrstudio_pro_expires.slice(0, 10) : 'never';
+    console.log(`expires  : ${until}`);
+  }
+  console.log('');
+  console.log('The person has to sign out and sign in again for the extension to see it.');
 }
 
-const response = await fetch(`${url}/auth/v1/admin/users/${user.id}`, {
-  method: 'PUT',
-  headers,
-  body: JSON.stringify({ user_metadata: metadata })
-});
-
-if (!response.ok) {
-  const body = await response.text();
-  console.error(`The account server refused the change (${response.status}): ${body}`);
+try {
+  await main();
+} catch (error) {
+  console.error(error.message);
   process.exit(1);
 }
-
-console.log(revoke ? `Pro removed from ${email}.` : `Pro granted to ${email}.`);
-console.log('');
-console.log(`account  : ${email}`);
-console.log(`user id  : ${user.id}`);
-if (!revoke) {
-  const until = metadata.qrstudio_pro_expires ? metadata.qrstudio_pro_expires.slice(0, 10) : 'never';
-  console.log(`expires  : ${until}`);
-}
-console.log('');
-console.log('The person has to sign out and sign in again for the extension to see it.');
