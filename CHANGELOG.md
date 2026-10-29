@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] — 2026-10-27
+
+### Fixed
+
+- **The extension id no longer changes.** The manifest now carries the public
+  key, so Chrome gives the extension the same id every time —
+  `lknekpjhbdknomipogelenajkhjpokki` — whether it is loaded unpacked, installed
+  from the signed package, or installed from the store. A copy you already have
+  updates in place instead of arriving as a second extension.
+- The key in the manifest is the **public** half of the signing key. It is not a
+  secret, and the private half stays on this machine.
+
 ## [2.4.0] — 2026-10-27
 
 ### Added
@@ -277,7 +289,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vault secrets stay in `chrome.storage.local` inside the current Chrome
   profile.
 
-[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.1...HEAD
+[2.4.1]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.3...v2.4.0
 [2.3.3]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/Kernlab-001/QR-Studio-Scanner-Authenticator/compare/v2.3.1...v2.3.2
