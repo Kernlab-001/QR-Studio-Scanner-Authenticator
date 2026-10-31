@@ -2,6 +2,7 @@
 
 const STORAGE = {
   accounts: 'authenticatorAccounts',
+  unreadable: 'authenticatorAccountsUnreadable',
   history: 'qrStudioHistory',
   historyEnabled: 'qrStudioHistoryEnabled'
 };
@@ -18,6 +19,7 @@ const state = {
   nativeDetector: undefined,
   selectedDeviceId: '',
   accounts: [],
+  unreadable: [],
   history: [],
   historyEnabled: false,
   currentResult: null,
@@ -71,6 +73,7 @@ const ui = {
   resultListHeading: $('#resultListHeading'),
   resultListItems: $('#resultListItems'),
   vaultCount: $('#vaultCount'),
+  vaultWarning: $('#vaultWarning'),
   accounts: $('#accounts'),
   vaultSearch: $('#vaultSearch'),
   clearVaultSearch: $('#clearVaultSearch'),
@@ -1628,6 +1631,13 @@ function renderAccounts() {
   state.accountUpdaters.clear();
   ui.accounts.replaceChildren();
   ui.vaultCount.textContent = state.accounts.length;
+  // Anything that could not be read is still kept on the device, so it is
+  // said out loud rather than quietly dropped.
+  const unreadable = state.unreadable?.length || 0;
+  ui.vaultWarning.hidden = !unreadable;
+  if (unreadable) {
+    ui.vaultWarning.textContent = `${unreadable} saved authenticator${unreadable === 1 ? '' : 's'} could not be read and ${unreadable === 1 ? 'has' : 'have'} been kept aside rather than deleted.`;
+  }
   const query = ui.vaultSearch.value.trim().toLowerCase();
   ui.clearVaultSearch.hidden = !query;
   const accounts = [...state.accounts]
@@ -1728,7 +1738,29 @@ async function saveAccounts() {
     addedAt: account.addedAt,
     issuerMismatch: account.issuerMismatch
   }));
-  await storageSet({ [STORAGE.accounts]: storedAccounts });
+  // Another view of the extension - the popup and the full-page tab - can be
+  // open at the same time. An account saved there is not thrown away here,
+  // so the two lists are merged by their id instead of one replacing the
+  // other.
+  const existing = await storageGet({ [STORAGE.accounts]: [] });
+  const known = new Set(storedAccounts.map((account) => account.id));
+  const merged = [...storedAccounts];
+  for (const account of existing[STORAGE.accounts] || []) {
+    if (account?.id && !known.has(account.id)) merged.push(account);
+  }
+  await storageSet({ [STORAGE.accounts]: merged });
+}
+
+// Takes the vault back from the storage, so two views of the extension do
+// not each hold their own copy and overwrite the other.
+async function reloadAccountsFromStorage() {
+  const stored = await storageGet({ [STORAGE.accounts]: [] });
+  const accounts = [];
+  for (const account of stored[STORAGE.accounts] || []) {
+    try { accounts.push(normaliseAccount(account, { keepId: true })); } catch { /* kept aside already */ }
+  }
+  state.accounts = accounts;
+  renderAccounts();
 }
 
 function updateHistoryEmptyState() {
@@ -2255,15 +2287,42 @@ async function clearHistory() {
 }
 
 async function loadState() {
-  const stored = await storageGet({ [STORAGE.accounts]: [], [STORAGE.history]: [], [STORAGE.historyEnabled]: false });
+  const stored = await storageGet({ [STORAGE.accounts]: [], [STORAGE.unreadable]: [], [STORAGE.history]: [], [STORAGE.historyEnabled]: false });
   const migrated = [];
+  const unreadable = [];
   for (const account of stored[STORAGE.accounts]) {
-    try { migrated.push(normaliseAccount(account, { keepId: true })); } catch (error) { console.warn('Skipped invalid saved authenticator.', error); }
+    try {
+      migrated.push(normaliseAccount(account, { keepId: true }));
+    } catch (error) {
+      // An account that cannot be read is kept, not thrown away. A stricter
+      // check in a later version should never destroy a secret.
+      console.warn('Kept an authenticator that could not be read.', error);
+      unreadable.push(account);
+    }
   }
   state.accounts = migrated;
+  state.unreadable = unreadable;
   state.history = Array.isArray(stored[STORAGE.history]) ? stored[STORAGE.history].filter((entry) => entry && typeof entry.raw === 'string' && !/^otpauth:\/\//i.test(entry.raw)) : [];
   state.historyEnabled = Boolean(stored[STORAGE.historyEnabled]);
-  if (migrated.length !== stored[STORAGE.accounts].length) await saveAccounts();
+  // The accounts that could not be read are put aside under their own name,
+  // and the ones that could are written back in their tidy shape.
+  await storageSet({
+    [STORAGE.unreadable]: unreadable,
+    [STORAGE.accounts]: migrated.map((account) => ({
+      id: account.id,
+      type: account.type,
+      secret: account.secret,
+      issuer: account.issuer,
+      accountName: account.accountName,
+      digits: account.digits,
+      period: account.period,
+      algorithm: account.algorithm,
+      counter: account.counter,
+      favorite: account.favorite,
+      addedAt: account.addedAt,
+      issuerMismatch: account.issuerMismatch
+    }))
+  });
   renderAccounts();
   renderHistory();
 }
@@ -2378,7 +2437,11 @@ function bindEvents() {
   // the popup hears about it straight away, even while it stays open.
   try {
     chrome.storage?.onChanged?.addListener((changes, area) => {
-      if (area === 'local' && changes?.qrStudioAccount) renderAccountState();
+      if (area !== 'local') return;
+      if (changes?.qrStudioAccount) renderAccountState();
+      // The vault is kept in step when another view of the extension - the
+      // popup and the full-page tab - changes it.
+      if (changes?.[STORAGE.accounts]) reloadAccountsFromStorage();
     });
   } catch {
     // Preview mode: the storage listener is not there.
