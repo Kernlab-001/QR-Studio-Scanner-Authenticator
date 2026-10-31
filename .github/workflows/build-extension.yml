@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -124,6 +129,9 @@ jobs:
           test -f vendor/supabase/LICENSE || { echo "the account client licence is missing"; exit 1; }
           grep -qi 'supabase' THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md does not mention the account client"; exit 1; }
           echo "third-party notices OK"
+
+      - name: Run the tests
+        run: node --test tests/
 
       - name: Round-trip the vendored libraries
         run: node scripts/verify-libraries.js

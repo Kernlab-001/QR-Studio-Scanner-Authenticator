@@ -7,7 +7,7 @@
 <p align="center">
   A local-only Chrome extension that scans and creates QR codes and keeps an offline 2FA vault.
   <br>
-  <b>No network calls. No analytics. No accounts. No cloud.</b>
+  <b>No analytics. No tracking. Your QR data never leaves your device.</b>
 </p>
 
 <p align="center">
@@ -27,7 +27,8 @@ password reset link, a Wi-Fi passphrase, or a 2FA seed — and those should neve
 travel across the internet to be read.
 
 QR Studio does everything **inside the browser extension**: decoding, creation,
-OTP generation, and encrypted backups. It makes zero network requests.
+OTP generation, and encrypted backups. The only time it talks to anything is
+when you choose to sign in to your own account.
 
 | | QR Studio | Typical online QR tool |
 |---|---|---|
@@ -149,15 +150,21 @@ contain a long-term secret:
 
 ## Privacy & security
 
-**QR Studio never makes a network request.** There is no analytics, no
-telemetry, no remote configuration, no update pings and no third-party
-service — the extension works with your machine fully offline.
+**Your QR data never makes a network request.** There is no analytics, no
+telemetry, no remote configuration, no update pings and no third-party service
+— the extension works with your machine fully offline.
+
+The one exception is the optional account: if you choose to sign in, that is a
+sign-in request to your own account server, and nothing else is ever sent. You
+do not need an account for anything, and the extension never loads anything
+from a server.
 
 | Data | Where it lives | When |
 |---|---|---|
 | General scan history | `chrome.storage.local` | Only if you turn history on (off by default) |
 | Vault accounts & OTP secrets | `chrome.storage.local` | When you save an account |
 | Backup files | Wherever you save them | When you export a backup |
+| Signed-in email and session token | `chrome.storage.local` | Only if you sign in |
 
 Chrome's user-data rules require disclosure even for data that never leaves the
 device, so the store listing declares exactly two categories:
@@ -239,6 +246,22 @@ node scripts/verify-libraries.js
 It encodes a string with the bundled `qrcode-generator`, rasterises the matrix
 and decodes it again with the bundled `jsQR` build, so a broken or truncated
 vendor file fails fast instead of silently breaking scanning.
+
+### Run the tests
+
+```bash
+node --test tests/
+```
+
+The tests load the extension's own code outside the browser, so the real
+functions are the ones being checked. They cover:
+
+- the importers, against the formats the apps really write — a Google
+  Authenticator export in the format Google uses, a 2FAS backup, and a list of
+  setup links;
+- every code the extension makes, read back with the decoder that ships with
+  it, in plain ASCII and in Hindi, Chinese, Cyrillic, emoji and accented text;
+- signing out, and the pages not having two things with the same name.
 
 ### Requirements for local testing
 

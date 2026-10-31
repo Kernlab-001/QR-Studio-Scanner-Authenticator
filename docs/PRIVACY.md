@@ -1,7 +1,7 @@
 # Privacy Policy — QR Studio
 
 **Last updated:** 26 October 2026
-**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.4.2
+**Applies to:** QR Studio — Scanner & Authenticator (Chrome extension), version 2.4.8
 
 ## Summary
 
@@ -49,14 +49,14 @@ the data it stores.
 - It does not use a remote configuration or update-ping service.
 - It does not load any remote scripts, fonts, stylesheets or images.
 - It does not read, modify or transmit the content of web pages.
-- It does not require an account, and there is nothing to sign up for.
 - It does not use advertising or tracking identifiers.
 - The only request it ever makes is a sign-in request to the account server,
   and only when you choose to sign in.
+- **An account is optional.** Nothing in the extension needs one.
 
-The only network permission in the extension's manifest is `activeTab`, which
-Chrome grants on demand. It is used in exactly two ways, both triggered by an
-explicit click you make:
+The permissions in the extension's manifest are `storage`, `activeTab` and
+`identity`. `activeTab` is granted by Chrome on demand, and it is used in
+exactly two ways, both triggered by an explicit click you make:
 
 1. capturing the **visible tab** as an image when you choose the *Tab* scan
    source, so the QR code on screen can be decoded;
@@ -80,9 +80,8 @@ creation. Both run entirely on your device.
 - A licence key is signed by the project key and verified inside the extension
   with the **public key only**. The check happens locally, so **activating Pro
   makes no network request and the extension still never contacts a server.**
-- There is no account, no sign-in, no device registration and no telemetry.
-  The extension cannot tell whether you have a licence beyond what is on your
-  own screen.
+- There is no device registration and no telemetry. The extension cannot tell
+  whether you have a licence beyond what is on your own screen.
 - The licence key, and the email address inside it, are stored in
   `chrome.storage.local` on your device and are never transmitted.
 - Payment itself happens on the payment provider's own website, which is
@@ -104,15 +103,17 @@ If you create an account:
 - With Google, Google checks your address and hands the account server an
   identity for it. QR Studio never sees your Google password.
 - With a password, your **email address and password go to the account server**
-  (Supabase), which handles the sign-in. Your password is never stored by QR
-  Studio and never passes through the extension.
+  (Supabase), which handles the sign-in. The password is typed into the
+  extension's own sign-in page and is handed straight to the account server
+  from there. It is never stored by QR Studio and never sent anywhere else.
 - The extension keeps the signed-in **email address and a session token** in
   `chrome.storage.local` on your device, so it can tell whether you are signed
   in.
 - **Nothing else is ever sent.** No QR content, no vault secrets, no scan
   history, no usage data. The extension never asks the account server anything
   about how you use it.
-- Signing out removes the session from the device.
+- Signing out ends the session on the account server and removes it from this
+  device.
 
 Pro features need a licence key. The key is checked offline, so it works
 whether or not you are signed in — the account only decides where you are sent

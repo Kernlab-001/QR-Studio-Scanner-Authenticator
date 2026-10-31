@@ -113,5 +113,25 @@ window.QRStudioAccount = {
     } catch {
       // Preview mode only.
     }
+  },
+
+  // The account server keeps the signed-in session in the extension's own
+  // page storage. Signing out has to take that away as well, or the account
+  // page would find the session again and sign the person straight back in.
+  sessionStorageKey() {
+    const url = window.QRStudioAccountConfig?.supabaseUrl || '';
+    const host = url.split('//')[1]?.split('/')[0] || '';
+    const project = host.split('.')[0];
+    return project ? `sb-${project}-auth-token` : '';
+  },
+
+  clearSession() {
+    const key = this.sessionStorageKey();
+    if (!key) return;
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Preview mode only.
+    }
   }
 };

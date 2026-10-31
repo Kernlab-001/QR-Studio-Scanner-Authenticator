@@ -186,20 +186,21 @@
       <p>If you create an account:</p>
       <ul>
         <li>Your <strong>email address and password go to the account server</strong> (Supabase), which
-        handles the sign-in. Your password is never stored by QR Studio and never passes through the
-        extension.</li>
+        handles the sign-in. The password is typed into the extension's own sign-in page and is handed
+        straight to the account server from there. It is never stored by QR Studio and never sent
+        anywhere else.</li>
         <li>The extension keeps the signed-in <strong>email address and a session token</strong> in
         <code>chrome.storage.local</code> on your device, so it can tell whether you are signed in.</li>
         <li><strong>Nothing else is ever sent.</strong> No QR content, no vault secrets, no scan
         history, no usage data. The extension never asks the account server anything about how you
         use it.</li>
-        <li>Signing out removes the session from the device.</li>
+        <li>Signing out ends the session on the account server and removes it from this device.</li>
       </ul>
       <p>Pro features need a licence key. The key is checked offline, so it works whether or not you
       are signed in &mdash; the account only decides where you are sent when you click a Pro feature.</p>
-      <p>The only network permission in the extension's manifest is <code>activeTab</code>, which
-      Chrome grants on demand. It is used in exactly two ways, both triggered by an explicit click
-      you make:</p>
+      <p>The permissions in the extension's manifest are <code>storage</code>, <code>activeTab</code> and
+      <code>identity</code>. <code>activeTab</code> is granted by Chrome on demand, and it is used in
+      exactly two ways, both triggered by an explicit click you make:</p>
       <ol>
         <li>capturing the <strong>visible tab</strong> as an image when you choose the <em>Tab</em>
         scan source, so the QR code on screen can be decoded;</li>
@@ -220,8 +221,8 @@
         <li>A licence key is signed by the project key and verified inside the extension with the
         <strong>public key only</strong>. The check happens locally, so <strong>activating Pro makes
         no network request and the extension still never contacts a server.</strong></li>
-        <li>There is no account, no sign-in, no device registration and no telemetry. The extension
-        cannot tell whether you have a licence beyond what is on your own screen.</li>
+        <li>There is no device registration and no telemetry. The extension cannot tell whether you
+        have a licence beyond what is on your own screen.</li>
         <li>The licence key, and the email address inside it, are stored in
         <code>chrome.storage.local</code> on your device and are never transmitted.</li>
         <li>Payment itself happens on the payment provider&rsquo;s own website, which is opened by

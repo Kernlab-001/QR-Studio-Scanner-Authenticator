@@ -1108,7 +1108,24 @@ async function renderAccountState() {
 }
 
 async function signOutAccount() {
+  const account = await window.QRStudioAccount?.read();
+  const config = window.QRStudioAccountConfig;
+  // The session is ended on the account server as well, and it is taken off
+  // this device. Clearing the copy the popup keeps is not enough on its own:
+  // the account page would find the session again and sign the person
+  // straight back in.
+  if (account?.accessToken && config?.supabaseUrl) {
+    try {
+      await fetch(`${config.supabaseUrl}/auth/v1/logout?scope=local`, {
+        method: 'POST',
+        headers: { apikey: config.supabaseAnonKey, Authorization: `Bearer ${account.accessToken}` }
+      });
+    } catch {
+      // The sign-out on this device still goes ahead.
+    }
+  }
   await window.QRStudioAccount?.clear();
+  await window.QRStudioAccount?.clearSession();
   await renderAccountState();
   showToast('Signed out.');
 }
@@ -1221,36 +1238,56 @@ async function requestBatchMode() {
 
 async function importAccounts(accounts) {
   let added = 0;
-  let skipped = 0;
+  let duplicates = 0;
+  const failed = [];
   for (const candidate of accounts) {
+    let account;
     try {
-      const account = normaliseAccount(candidate);
-      const duplicate = state.accounts.find((item) => item.secret === account.secret && item.issuer === account.issuer && item.accountName === account.accountName);
-      if (duplicate) {
-        skipped += 1;
-        continue;
-      }
-      state.accounts.push(account);
-      added += 1;
-    } catch {
-      skipped += 1;
+      account = normaliseAccount(candidate);
+    } catch (error) {
+      failed.push({ reason: error.message, source: candidate?.accountName || candidate?.name || '' });
+      continue;
     }
+    // The same secret with the same settings is the same account, whatever
+    // it happens to be called.
+    const duplicate = state.accounts.find((item) => item.secret === account.secret
+      && item.type === account.type
+      && item.algorithm === account.algorithm
+      && item.digits === account.digits
+      && item.period === account.period);
+    if (duplicate) {
+      duplicates += 1;
+      continue;
+    }
+    state.accounts.push(account);
+    added += 1;
   }
   await saveAccounts();
   renderAccounts();
-  return { added, skipped };
+  return { added, duplicates, failed };
 }
 
 async function runBulkImport(text) {
   try {
-    const accounts = window.QRStudioPro.parseImport(text);
+    const parsed = window.QRStudioPro.parseImport(text);
+    const accounts = parsed.accounts;
     const preview = accounts.slice(0, 6).map((account) => `${account.issuer} · ${account.accountName}`).join('\n');
     const more = accounts.length > 6 ? `\n…and ${accounts.length - 6} more` : '';
-    if (!confirm(`Import ${accounts.length} authenticator${accounts.length === 1 ? '' : 's'}?\n\n${preview}${more}\n\nThey are stored on this device only.`)) return;
+    const batch = accounts[0]?.batch;
+    const which = batch ? `\n\nThis is code ${batch.number} of ${batch.total}.` : '';
+    if (!confirm(`Import ${accounts.length} authenticator${accounts.length === 1 ? '' : 's'}?${which}\n\n${preview}${more}\n\nThey are stored on this device only.`)) return;
     const result = await importAccounts(accounts);
     ui.bulkImportWarning.textContent = '';
     ui.bulkImportText.value = '';
-    showToast(`Imported ${result.added} authenticator${result.added === 1 ? '' : 's'}${result.skipped ? `, skipped ${result.skipped} already here` : ''}.`);
+    const problems = [...(parsed.failed || []), ...result.failed];
+    if (problems.length) {
+      ui.bulkImportWarning.textContent = problems.slice(0, 6)
+        .map((problem) => problem.reason).join('\n');
+    }
+    const parts = [`Imported ${result.added} authenticator${result.added === 1 ? '' : 's'}`];
+    if (result.duplicates) parts.push(`${result.duplicates} already here`);
+    if (problems.length) parts.push(`${problems.length} could not be read`);
+    showToast(`${parts.join(', ')}.`);
   } catch (error) {
     ui.bulkImportWarning.textContent = error.message;
   }
@@ -1928,9 +1965,9 @@ function vcardEscape(value) {
   return String(value).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/;/g, '\\;').replace(/,/g, '\\,');
 }
 
-function makeCreatorPayload() {
-  const type = ui.createTemplate.value;
-  const values = creatorValues();
+// The payload for a template, from the values that were typed in. It is kept
+// apart from the page so it can be checked on its own.
+function buildCreatorPayload(type, values) {
   if (type === 'text') {
     if (!values.content) throw new Error('Enter text or data to encode.');
     return values.content;
@@ -1951,7 +1988,10 @@ function makeCreatorPayload() {
     const parameters = new URLSearchParams();
     if (values.subject) parameters.set('subject', values.subject);
     if (values.body) parameters.set('body', values.body);
-    return `mailto:${values.email}${parameters.toString() ? `?${parameters}` : ''}`;
+    // A space is written as %20 rather than +, which is what mail clients
+    // expect. A real plus is already written as %2B, so this is safe.
+    const query = parameters.toString().replace(/\+/g, '%20');
+    return `mailto:${values.email}${query ? `?${query}` : ''}`;
   }
   if (type === 'sms') {
     if (!values.number) throw new Error('Enter a phone number.');
@@ -1970,6 +2010,10 @@ function makeCreatorPayload() {
     return ['BEGIN:VCARD', 'VERSION:3.0', values.name ? `FN:${vcardEscape(values.name)}` : '', values.organization ? `ORG:${vcardEscape(values.organization)}` : '', values.phone ? `TEL:${vcardEscape(values.phone)}` : '', values.email ? `EMAIL:${vcardEscape(values.email)}` : '', 'END:VCARD'].filter(Boolean).join('\n');
   }
   throw new Error('Unknown QR template.');
+}
+
+function makeCreatorPayload() {
+  return buildCreatorPayload(ui.createTemplate.value, creatorValues());
 }
 
 // The generated code can be styled: module shape, colours, quiet zone and
@@ -2009,6 +2053,12 @@ function drawQrModule(context, shape, x, y, size) {
 
 function buildQr(payload, style) {
   const qr = window.qrcode(0, style.ecl);
+  // The bundled generator keeps only the low byte of each character unless
+  // it is told to use UTF-8, which quietly corrupts anything outside plain
+  // ASCII - Hindi, Chinese, Cyrillic, emoji and accented letters alike.
+  if (window.qrcode.stringToBytesFuncs?.['UTF-8']) {
+    window.qrcode.stringToBytes = window.qrcode.stringToBytesFuncs['UTF-8'];
+  }
   qr.addData(payload);
   qr.make();
   return qr;

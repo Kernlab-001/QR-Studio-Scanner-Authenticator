@@ -80,7 +80,25 @@
   const ALGORITHMS = ['SHA1', 'SHA256', 'SHA512'];
   const DIGITS = [6, 8];
 
+  // The shape an account is handed to the vault in.
+  function accountShape({ type, secret, issuer, accountName, algorithm, digits, period, counter }) {
+    return {
+      type,
+      secret,
+      issuer: issuer || '',
+      accountName: accountName || '',
+      algorithm: algorithm || 'SHA1',
+      digits: Number(digits) || 6,
+      period: Number(period) || 30,
+      counter: Number(counter) || 0
+    };
+  }
+
   // otpauth-migration://offline?data=<base64>
+  //
+  // The accounts are in field 1 and the version of the format in field 2. A
+  // big export is split over several codes, and fields 3 to 5 say how many
+  // there are and which one this is.
   function parseMigrationUri(uri) {
     const text = String(uri || '').trim();
     if (!/^otpauth-migration:\/\//i.test(text)) throw new Error('That is not a Google Authenticator migration code.');
@@ -96,84 +114,134 @@
     if (!data) throw new Error('The migration code carries no data.');
     const bytes = bytesFromBase64(data);
     const accounts = [];
+    const failed = [];
+    let version = 0;
+    let batchSize = 0;
+    let batchIndex = 0;
+    let batchId = 0;
     for (const field of parseFields(bytes)) {
-      if (field.fieldNumber !== 2 || field.wireType !== 2) continue;
-      accounts.push(parseMigrationAccount(field.data));
+      if (field.fieldNumber === 1 && field.wireType === 2) {
+        try {
+          accounts.push(parseMigrationAccount(field.data));
+        } catch (error) {
+          failed.push({ reason: error.message });
+        }
+        continue;
+      }
+      if (field.wireType !== 0) continue;
+      if (field.fieldNumber === 2) version = field.value;
+      else if (field.fieldNumber === 3) batchSize = field.value;
+      else if (field.fieldNumber === 4) batchIndex = field.value;
+      else if (field.fieldNumber === 5) batchId = field.value;
     }
-    if (!accounts.length) throw new Error('No authenticator accounts were found in that migration code.');
-    return accounts;
+    if (!accounts.length && !failed.length) throw new Error('No authenticator accounts were found in that migration code.');
+    const batch = batchSize > 1
+      ? { size: batchSize, index: batchIndex, number: batchIndex + 1, total: batchSize, id: batchId }
+      : null;
+    accounts.forEach((account) => { account.batch = batch; });
+    return { accounts, failed, format: 'google', version, batch };
   }
 
   function parseMigrationAccount(bytes) {
     const account = { type: 'totp', secret: '', issuer: '', accountName: '', algorithm: 'SHA1', digits: 6, period: 30, counter: 0 };
     for (const field of parseFields(bytes)) {
       if (field.fieldNumber === 1 && field.wireType === 2) account.secret = base32Encode(field.data);
-      else if (field.fieldNumber === 2 && field.wireType === 2) account.name = new TextDecoder().decode(field.data);
-      else if (field.fieldNumber === 3 && field.wireType === 2) account.issuer = new TextDecoder().decode(field.data);
-      else if (field.fieldNumber === 4 && field.wireType === 0) account.algorithm = ALGORITHMS[field.value - 1] || 'SHA1';
+      else if (field.fieldNumber === 2 && field.wireType === 2) account.issuer = new TextDecoder().decode(field.data);
+      else if (field.fieldNumber === 3 && field.wireType === 2) account.accountName = new TextDecoder().decode(field.data);
+      else if (field.fieldNumber === 4 && field.wireType === 0) {
+        // An algorithm that is not one of the three would quietly produce the
+        // wrong code, so the account is refused instead.
+        const algorithm = ALGORITHMS[field.value - 1];
+        if (!algorithm) throw new Error('This account uses an algorithm QR Studio does not support.');
+        account.algorithm = algorithm;
+      }
       else if (field.fieldNumber === 5 && field.wireType === 0) account.digits = DIGITS[field.value - 1] || 6;
       else if (field.fieldNumber === 6 && field.wireType === 0) account.type = field.value === 1 ? 'hotp' : 'totp';
       else if (field.fieldNumber === 7 && field.wireType === 0) account.counter = field.value;
     }
-    const label = account.name || account.issuer || 'Account';
-    const splitAt = label.indexOf(':');
+    // Some exports put the whole label in the name, as "Issuer:account".
+    const splitAt = account.accountName.indexOf(':');
     if (splitAt >= 0) {
-      account.issuer = account.issuer || label.slice(0, splitAt).trim();
-      account.accountName = label.slice(splitAt + 1).trim();
-    } else {
-      account.accountName = label;
+      account.issuer = account.issuer || account.accountName.slice(0, splitAt).trim();
+      account.accountName = account.accountName.slice(splitAt + 1).trim();
     }
+    account.accountName = account.accountName || account.issuer || 'Account';
     account.issuer = account.issuer || 'Authenticator';
     return account;
   }
 
   /* ---------------- other export formats ---------------- */
 
-  // 2FAS keeps an otpauth link for every service.
+  // 2FAS keeps the secret beside the settings rather than inside the setup
+  // link, so the account is built from the two.
   function parseTwoFas(text) {
     const data = JSON.parse(text);
-    const services = Array.isArray(data) ? data : data.services;
-    if (!Array.isArray(services)) throw new Error('That file is not a 2FAS export.');
+    const services = Array.isArray(data) ? data : data?.services;
+    if (!Array.isArray(services) || !services.length) {
+      throw new Error('That 2FAS backup has no services in it. If it is protected by a password, export it without one and try again.');
+    }
     const accounts = [];
+    const failed = [];
     for (const service of services) {
-      const link = service?.otp?.link || service?.link;
-      if (!link || !/^otpauth:\/\//i.test(link)) continue;
-      const parsed = global.parseOtpAuth(link);
-      accounts.push({
-        type: parsed.type,
-        secret: parsed.secret,
-        issuer: parsed.issuer,
-        accountName: parsed.accountName,
-        algorithm: parsed.algorithm,
-        digits: parsed.digits,
-        period: parsed.period,
-        counter: parsed.counter
-      });
+      try {
+        accounts.push(twoFasAccount(service));
+      } catch (error) {
+        failed.push({ reason: error.message });
+      }
     }
     if (!accounts.length) throw new Error('No authenticator accounts were found in that 2FAS export.');
-    return accounts;
+    return { accounts, failed, format: '2fas' };
+  }
+
+  function twoFasAccount(service) {
+    const otp = service?.otp || {};
+    const secret = String(service?.secret || '').trim();
+    const link = otp.link || service?.link;
+    // The link is only used when it carries a real secret. 2FAS sometimes
+    // writes "secret=[hidden]" there and keeps the real one beside it, and
+    // the value there may be written in its escaped form.
+    let linkSecret = '';
+    if (link && /^otpauth:\/\//i.test(link)) {
+      const match = /[?&]secret=([^&]*)/i.exec(link);
+      if (match) {
+        try { linkSecret = decodeURIComponent(match[1]); } catch { linkSecret = match[1]; }
+      }
+    }
+    if (linkSecret && !/hidden/i.test(linkSecret)) {
+      const parsed = global.parseOtpAuth(link);
+      return accountShape(parsed);
+    }
+    if (!secret) throw new Error('An entry in the 2FAS backup has no secret.');
+    return accountShape({
+      type: String(otp.tokenType || 'TOTP').toLowerCase() === 'hotp' ? 'hotp' : 'totp',
+      secret,
+      issuer: otp.issuer || '',
+      accountName: otp.account || '',
+      algorithm: String(otp.algorithm || 'SHA1').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+      digits: otp.digits,
+      period: otp.period,
+      counter: otp.counter
+    });
   }
 
   // A plain list of setup URIs, one per line.
   function parseOtpAuthList(text) {
     const accounts = [];
+    const failed = [];
     const lines = String(text || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     for (const line of lines) {
-      if (!/^otpauth:\/\//i.test(line)) continue;
-      const parsed = global.parseOtpAuth(line);
-      accounts.push({
-        type: parsed.type,
-        secret: parsed.secret,
-        issuer: parsed.issuer,
-        accountName: parsed.accountName,
-        algorithm: parsed.algorithm,
-        digits: parsed.digits,
-        period: parsed.period,
-        counter: parsed.counter
-      });
+      if (!/^otpauth:\/\//i.test(line)) {
+        failed.push({ reason: 'This is not a setup link.', source: line });
+        continue;
+      }
+      try {
+        accounts.push(accountShape(global.parseOtpAuth(line)));
+      } catch (error) {
+        failed.push({ reason: error.message, source: line });
+      }
     }
     if (!accounts.length) throw new Error('No otpauth:// setup URIs were found in that text.');
-    return accounts;
+    return { accounts, failed, format: 'list' };
   }
 
   // Works out which export format the file or text is, and reads it.
@@ -184,7 +252,11 @@
       try {
         return parseTwoFas(trimmed);
       } catch (error) {
-        return parseOtpAuthList(trimmed);
+        // A file that is not a 2FAS backup may still hold setup links. If it
+        // does not, the reason it was not a 2FAS backup is the useful one.
+        const listed = parseOtpAuthList(trimmed);
+        if (!listed.accounts.length) throw error;
+        return listed;
       }
     }
     return parseOtpAuthList(trimmed);
