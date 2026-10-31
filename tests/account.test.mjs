@@ -42,3 +42,50 @@ test('no page has two things with the same name', () => {
     assert.deepEqual(duplicates, [], `${file} has no name used twice`);
   }
 });
+
+const savedAccount = {
+  id: 'a-good-one',
+  type: 'totp',
+  secret: 'JBSWY3DPEHPK3PXP',
+  issuer: 'Example',
+  accountName: 'alice',
+  digits: 6,
+  period: 30,
+  algorithm: 'SHA1'
+};
+
+test('an account that cannot be read is kept, not deleted', async () => {
+  const context = loadExtension();
+  await context.chrome.storage.local.set({
+    authenticatorAccounts: [
+      savedAccount,
+      { ...savedAccount, id: 'a-bad-one', accountName: 'bob', secret: 'not!base32!' }
+    ]
+  });
+
+  await context.loadState();
+
+  const stored = await context.chrome.storage.local.get(['authenticatorAccounts', 'authenticatorAccountsUnreadable']);
+  assert.equal(stored.authenticatorAccounts.length, 1, 'the one that reads is kept');
+  assert.equal(stored.authenticatorAccounts[0].id, 'a-good-one');
+  assert.equal(stored.authenticatorAccountsUnreadable?.length, 1, 'the one that does not is kept aside');
+  assert.equal(stored.authenticatorAccountsUnreadable[0].id, 'a-bad-one', 'and it is the right one');
+});
+
+test('saving the vault does not throw away an account another view added', async () => {
+  const context = loadExtension();
+  await context.chrome.storage.local.set({ authenticatorAccounts: [savedAccount] });
+  await context.loadState();
+
+  // Another view of the extension adds one while this one is open.
+  const added = { ...savedAccount, id: 'added-elsewhere', accountName: 'bob' };
+  await context.chrome.storage.local.set({ authenticatorAccounts: [savedAccount, added] });
+
+  await context.saveAccounts();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+
+  const stored = await context.chrome.storage.local.get('authenticatorAccounts');
+  const ids = stored.authenticatorAccounts.map((account) => account.id);
+  assert.ok(ids.includes('added-elsewhere'), 'the account added elsewhere is still there');
+  assert.ok(ids.includes('a-good-one'), 'and so is the one this view knows about');
+});

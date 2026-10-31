@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - An export split over several codes says which one it is, so "code 2 of 3" is known.
 - An account with an algorithm the extension does not support is refused, rather than being imported with the wrong settings and quietly giving the wrong code.
+- **A saved account that cannot be read is kept, not deleted.** A stricter check in a later version should never quietly throw away a secret, so anything that cannot be read is set aside and the vault says so.
+- **Two open views of the extension no longer overwrite each other.** The popup and the full-page tab can both be open now, and an account saved in one is not lost in the other.
 - There are tests now, and they run on every build: the importers are checked against the formats the apps really write, and every code the extension makes is read back with the decoder that ships with it.
 
 ### Changed
