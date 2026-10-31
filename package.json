@@ -1,0 +1,13 @@
+{
+  "name": "qr-studio",
+  "version": "2.4.8",
+  "private": true,
+  "description": "Tests and checks for the QR Studio Chrome extension. The extension itself has no dependencies.",
+  "scripts": {
+    "test": "node --test tests/",
+    "check": "node scripts/verify-libraries.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

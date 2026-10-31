@@ -22,7 +22,7 @@
   const intro = document.getElementById('accountIntro');
   const message = document.getElementById('accountMessage');
   const signedInMessage = document.getElementById('accountSignedInMessage');
-  const accountEmail = document.getElementById('accountEmail');
+  const accountEmail = document.getElementById('accountSignedInEmail');
   const signOutButton = document.getElementById('accountSignOut');
 
   let mode = 'signin';
@@ -164,11 +164,14 @@
 
   async function signOut() {
     try {
-      if (client) await client.auth.signOut();
-    } catch {
-      // The local session is cleared either way.
+      // Only this device is signed out. The default would end the session on
+      // every device the person has signed in on.
+      if (client) await client.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      say(explain(error), 'error');
     }
     await store.clear();
+    await store.clearSession();
     passwordInput.value = '';
     showSignedOut();
     signedInMessage.textContent = 'Signed out.';

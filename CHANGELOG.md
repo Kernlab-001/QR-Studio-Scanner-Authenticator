@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.8] — 2026-10-31
+
+### Fixed
+
+- **Importing from Google Authenticator works.** A real export was read from the wrong place and came back empty, so the import could never work.
+- **Importing a 2FAS backup works.** The secret is now read from where 2FAS keeps it, and a link that only says "[hidden]" no longer stands in for the real secret.
+- **A QR code with text outside plain ASCII is no longer corrupted.** Hindi, Chinese, Cyrillic, emoji and accented letters came out as rubbish, and a Wi-Fi network with an accented name or password would not connect.
+- **Signing out signs you out.** The session was left behind, and the next page you opened signed you straight back in. Signing out now ends the session on the account server and takes it off the device.
+- **One bad entry no longer throws the whole import away.** The good ones are imported and the bad one is named.
+- **The address you are signed in with now shows** on the account page. It was written into a field that was not the one on screen.
+- **An email draft writes spaces the way mail clients expect**, rather than a plus sign.
+
+### Added
+
+- An export split over several codes says which one it is, so "code 2 of 3" is known.
+- An account with an algorithm the extension does not support is refused, rather than being imported with the wrong settings and quietly giving the wrong code.
+- There are tests now, and they run on every build: the importers are checked against the formats the apps really write, and every code the extension makes is read back with the decoder that ships with it.
+
+### Changed
+
+- The README and the privacy policy now say what is true: your QR data never leaves your device, and the only request the extension ever makes is a sign-in request to your own account server, and only if you choose to sign in.
+
 ## [2.4.7] — 2026-10-29
 
 ### Fixed
