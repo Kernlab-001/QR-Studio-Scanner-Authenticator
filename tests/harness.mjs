@@ -5,10 +5,14 @@
 // to run, and then the real functions can be called and checked.
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
-export const repoRoot = new URL('..', import.meta.url).pathname.replace(/^\//, '').replace(/\/$/, '');
+// The path is turned into a real filesystem path rather than a URL path, so
+// it works the same on Windows and on Linux.
+export const repoRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 export const qrcode = require(`${repoRoot}/qrcode-generator.js`);
 export const jsQR = require(`${repoRoot}/jsqr.js`);
@@ -180,6 +184,20 @@ export function makeLocalStorage() {
   };
 }
 
+// The two browser types the page reaches for that Node does not have.
+class ImageDataStub {
+  constructor(data, width, height) {
+    this.data = data instanceof Uint8ClampedArray ? data : new Uint8ClampedArray(data || 0);
+    this.width = width ?? this.data.length / 4;
+    this.height = height ?? this.data.length / 4 / this.width;
+    this.colorSpace = 'srgb';
+  }
+}
+
+class DataTransferStub {
+  constructor() { this.items = { add() {} }; this.files = []; }
+}
+
 // --- loading the shipped code ------------------------------------------------
 
 // The page and the extension APIs the code reaches for.
@@ -225,12 +243,12 @@ export function makeContext(extra = {}) {
     atob: (value) => Buffer.from(value, 'base64').toString('binary'),
     btoa: (value) => Buffer.from(value, 'binary').toString('base64'),
     Blob: globalThis.Blob,
-    ImageData: globalThis.ImageData,
+    ImageData: globalThis.ImageData || ImageDataStub,
     Uint8Array,
     Uint8ClampedArray,
     ArrayBuffer,
     File: globalThis.File,
-    DataTransfer: globalThis.DataTransfer,
+    DataTransfer: globalThis.DataTransfer || DataTransferStub,
     localStorage: makeLocalStorage(),
     // The page loads these as scripts, so they are globals in the page.
     qrcode,
