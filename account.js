@@ -23,6 +23,7 @@
   const message = document.getElementById('accountMessage');
   const signedInMessage = document.getElementById('accountSignedInMessage');
   const accountEmail = document.getElementById('accountSignedInEmail');
+  const accountState = document.getElementById('accountState');
   const signOutButton = document.getElementById('accountSignOut');
 
   let mode = 'signin';
@@ -110,6 +111,11 @@
     notConfigured.hidden = true;
     signedIn.hidden = false;
     accountEmail.textContent = account.email;
+    // A Pro account says so, rather than pointing at a licence key that is
+    // not what unlocked it.
+    accountState.textContent = account.pro
+      ? 'Pro is active on this account. Bulk import and batch QR creation are unlocked.'
+      : 'Add a licence key to unlock Pro: open QR Studio, go to Vault, then QR Studio Pro.';
   }
 
   function showSignedOut() {
@@ -206,9 +212,9 @@
     if (text.includes('Email not confirmed')) return 'This account still needs its email address confirmed.';
     if (text.includes('User already registered')) return 'That address already has an account - try signing in.';
     if (text.includes('rate limit') || text.includes('over_email_send_rate_limit')) {
-      return 'The account server cannot send confirmation emails right now. Use Google sign-in, or ask the maintainer to turn auto-confirm on.';
+      return 'Confirmation emails cannot be sent right now. Sign in with Google instead.';
     }
-    if (text.includes('Failed to fetch')) return 'The account server could not be reached. Check your connection.';
+    if (text.includes('Failed to fetch')) return 'Could not reach the sign-in service. Check your connection and try again.';
     return text;
   }
 

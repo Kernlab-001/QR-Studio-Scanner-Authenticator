@@ -154,10 +154,10 @@ contain a long-term secret:
 telemetry, no remote configuration, no update pings and no third-party service
 — the extension works with your machine fully offline.
 
-The one exception is the optional account: if you choose to sign in, that is a
-sign-in request to your own account server, and nothing else is ever sent. You
-do not need an account for anything, and the extension never loads anything
-from a server.
+The one exception is the optional account: if you choose to sign in or sign
+out, that is a request to your own account server, and nothing else is ever
+sent. You do not need an account for anything, and the extension never loads
+anything from a server.
 
 | Data | Where it lives | When |
 |---|---|---|

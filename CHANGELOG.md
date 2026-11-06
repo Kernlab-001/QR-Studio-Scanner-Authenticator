@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.9] — 2026-11-06
+
+### Fixed
+
+- **A scanned authenticator export can no longer be copied out of the results.** The button handed over the raw export, which carries every secret, even though the code on screen showed it hidden. There is no copy button for an export now, and the text that is shown is the text that is copied.
+- **A secret can no longer end up in a file name.** A batch ZIP named its files after the code inside them, so a Wi-Fi password or a reset link ended up in the name. The files are now named after the kind of code they hold.
+- **A licence is no longer thrown away because the check failed.** If the browser could not check the key at that moment, the key was deleted and a paid licence was lost. The key is now kept unless it is definitely no good.
+- **"Import the accounts" is no longer a dead end.** It now goes through the same gate as the other Pro features, so there is somewhere to go next.
+- The account page no longer asks you to "ask the maintainer" to change a setting on the server. It says what you can do instead.
+- The account page says which Pro you have: a licence key, or an account that includes Pro.
+- The privacy policy, the pages and the README say that signing out also talks to the account server, which it does.
+
 ## [2.4.8] — 2026-10-31
 
 ### Fixed
