@@ -38,7 +38,9 @@
     const key = String(licenceKey || '').trim();
     if (!key) return { ok: false, reason: 'Enter a licence key.' };
     const parts = key.split('.');
-    if (parts.length !== 3 || parts[0] !== PREFIX) return { ok: false, reason: 'That does not look like a QR Studio licence key.' };
+    if (parts.length !== 3 || parts[0] !== PREFIX) {
+      return { ok: false, reason: 'That does not look like a QR Studio licence key.', permanent: true };
+    }
     let payload;
     let payloadBytes;
     let signature;
@@ -47,7 +49,7 @@
       signature = decodeSegment(parts[2]);
       payload = JSON.parse(new TextDecoder().decode(payloadBytes));
     } catch {
-      return { ok: false, reason: 'The licence key is damaged or incomplete.' };
+      return { ok: false, reason: 'The licence key is damaged or incomplete.', permanent: true };
     }
     try {
       const verifier = await publicKey();
@@ -57,13 +59,15 @@
         signature,
         payloadBytes
       );
-      if (!valid) return { ok: false, reason: 'This licence key was not issued by QR Studio.' };
+      if (!valid) return { ok: false, reason: 'This licence key was not issued by QR Studio.', permanent: true };
     } catch (error) {
-      return { ok: false, reason: `The licence could not be checked: ${error.message}` };
+      // The check itself failed, not the licence. A key that cannot be
+      // checked right now may well be a good one, so it is kept.
+      return { ok: false, reason: `The licence could not be checked: ${error.message}`, permanent: false };
     }
-    if (payload.plan !== 'pro') return { ok: false, reason: 'This licence does not unlock QR Studio Pro.' };
+    if (payload.plan !== 'pro') return { ok: false, reason: 'This licence does not unlock QR Studio Pro.', permanent: true };
     if (payload.exp && new Date(payload.exp).getTime() < Date.now()) {
-      return { ok: false, reason: 'This licence has expired.', payload };
+      return { ok: false, reason: 'This licence has expired.', payload, permanent: true };
     }
     return { ok: true, reason: '', payload };
   }
@@ -83,10 +87,13 @@
       if (!value?.key) return null;
       const result = await verify(value.key);
       if (!result.ok) {
-        // A licence that has run out, or one that can never be used, is
-        // taken out of the profile straight away. Nothing is left behind
-        // that could be used later.
-        await store.remove(STORAGE_KEY);
+        // A licence that has run out, or one that was never a licence, is
+        // taken out of the profile. A licence that merely could not be
+        // checked is kept, so a temporary problem never costs someone a
+        // licence they paid for.
+        if (result.permanent !== false) {
+          await store.remove(STORAGE_KEY);
+        }
         cached = null;
         return null;
       }

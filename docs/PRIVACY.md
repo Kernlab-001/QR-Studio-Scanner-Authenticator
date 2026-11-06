@@ -50,8 +50,8 @@ the data it stores.
 - It does not load any remote scripts, fonts, stylesheets or images.
 - It does not read, modify or transmit the content of web pages.
 - It does not use advertising or tracking identifiers.
-- The only request it ever makes is a sign-in request to the account server,
-  and only when you choose to sign in.
+- The only requests it ever makes go to the account server, and only when you
+  sign in or sign out.
 - **An account is optional.** Nothing in the extension needs one.
 
 The permissions in the extension's manifest are `storage`, `activeTab` and

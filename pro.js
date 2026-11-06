@@ -336,8 +336,10 @@
     return new Blob([...parts, ...central, end], { type: 'application/zip' });
   }
 
-  function safeFileName(text, index) {
-    const cleaned = String(text || '').replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  // The name of a file in the ZIP says what the code is, never what it says.
+  // A Wi-Fi password or a secret would otherwise end up in the file name.
+  function safeFileName(hint, index) {
+    const cleaned = String(hint || '').replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 24).toLowerCase();
     return `${String(index + 1).padStart(3, '0')}-${cleaned || 'code'}.png`;
   }
 

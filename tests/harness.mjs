@@ -278,6 +278,7 @@ export function loadIn(context, file) {
 export function loadExtension(extra = {}) {
   const context = makeContext(extra);
   loadIn(context, 'account-config.js');
+  loadIn(context, 'licence.js');
   loadIn(context, 'popup.js');
   loadIn(context, 'pro.js');
   return context;

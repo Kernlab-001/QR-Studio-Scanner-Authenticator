@@ -973,6 +973,12 @@ function showResult({ type, label, description, value, actions = [], code = null
 }
 
 // Codes found next to the first one in the same frame are listed underneath.
+// A setup URI carries the 2FA shared secret and an export carries every
+// secret, so neither is ever copied.
+function mayCopyRaw(kind) {
+  return kind !== 'authenticator' && kind !== 'migration';
+}
+
 function renderExtraResults(rawValues) {
   ui.resultListItems.replaceChildren();
   ui.resultList.hidden = !rawValues.length;
@@ -1023,14 +1029,15 @@ function renderExtraResults(rawValues) {
       openButton.hidden = true;
     }
     actions.append(openButton);
-    // A setup URI carries the 2FA shared secret, so it is never copied raw.
-    // The main result redacts it the same way.
-    if (result.kind !== 'authenticator') {
+    // A setup URI carries the 2FA shared secret and an export carries every
+    // secret, so neither is copied. The main result redacts them the same way.
+    if (mayCopyRaw(result.kind)) {
       const copyButton = document.createElement('button');
       copyButton.type = 'button';
       copyButton.className = 'mini-button';
       copyButton.textContent = 'Copy';
-      copyButton.addEventListener('click', () => copyText(raw));
+      // The shown value, never the raw payload.
+      copyButton.addEventListener('click', () => copyText(result.value));
       actions.append(copyButton);
     }
 
@@ -1312,6 +1319,25 @@ function setCreatorMode(mode) {
   if (!batch) scheduleLiveQr();
 }
 
+// The name of a file in a batch ZIP says what the code is, never what it
+// says. A Wi-Fi password, a reset link or a secret would otherwise end up
+// in the file name, where anyone can read it.
+function batchFileHint(payload) {
+  const hints = {
+    url: 'link',
+    wifi: 'wifi',
+    email: 'email',
+    sms: 'sms',
+    phone: 'phone',
+    location: 'location',
+    contact: 'contact',
+    authenticator: 'authenticator',
+    migration: 'export',
+    text: 'text'
+  };
+  return hints[classifyPayload(payload).kind] || 'code';
+}
+
 async function generateBatchCodes() {
   if (!isPro()) {
     showToast('Batch creation is a QR Studio Pro feature.', 'error');
@@ -1336,7 +1362,7 @@ async function generateBatchCodes() {
       drawQrMatrix(context, qr, style, dimension / modules);
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
       const buffer = new Uint8Array(await blob.arrayBuffer());
-      files.push({ name: window.QRStudioPro.safeFileName(lines[index], index), data: buffer });
+      files.push({ name: window.QRStudioPro.safeFileName(batchFileHint(lines[index]), index), data: buffer });
     }
     const zip = window.QRStudioPro.createZip(files);
     downloadBlob(zip, `qr-studio-batch-${new Date().toISOString().slice(0, 10)}.zip`);
@@ -1368,11 +1394,10 @@ async function handleScannedValue(rawValue, { source = 'scanner', extra = [] } =
       label: 'Authenticator export',
       description: 'This QR holds a set of authenticator accounts that can be imported in one go. The export itself is never shown, because it carries every secret.',
       value: result.value,
-      actions: [action('Import the accounts', () => {
-        if (!isPro()) {
-          showToast('Bulk import is a QR Studio Pro feature.', 'error');
-          return;
-        }
+      actions: [action('Import the accounts', async () => {
+        // The same gate as every other Pro feature, so there is a way
+        // forward instead of a message with nothing behind it.
+        if (!(await allowProFeature('bulk-import'))) return;
         runBulkImport(raw);
       })]
     });
