@@ -131,6 +131,34 @@ The store listing is being prepared separately; this repository is the
 
 ---
 
+## Uninstalling
+
+Everything the extension keeps lives in your own Chrome profile, so removing
+the extension takes all of it with it:
+
+- the vault accounts and their 2FA secrets,
+- the scan history, if you turned it on,
+- your settings and the licence key,
+- the signed-in email address and session token.
+
+To remove it, open `chrome://extensions`, find **QR Studio**, and click
+**Remove**. To wipe the data and keep the extension, clear the history and
+delete the accounts from the Vault first.
+
+**Keep a copy of your licence key.** It goes with the extension, and it is
+what puts Pro back if you install it again.
+
+Two things are not the extension's, and stay where they are:
+
+- an **encrypted backup** you exported is a file on your own disk. The
+  extension never writes it and never deletes it.
+- your **account** on the account server. Removing the extension stops the
+  extension talking to it; it does not delete the account. Sign out before
+  you remove the extension, and ask the account owner to delete the account
+  if you want it gone.
+
+---
+
 ## How QR content is handled
 
 **General QR codes** always preserve the exact decoded payload. It can be a
