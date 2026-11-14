@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-11-14
+
+### Added
+
+- The README now says how to uninstall the extension, what goes with it, and
+  what does not: the vault, the history, the settings, the licence key and the
+  signed-in session all leave with the extension; an encrypted backup and the
+  account on the account server do not.
+
 ## [2.5.0] — 2026-11-14
 
 ### Fixed
