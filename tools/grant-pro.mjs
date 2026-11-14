@@ -101,7 +101,10 @@ async function main() {
     process.exit(1);
   }
 
-  const metadata = { ...(user.user_metadata || {}) };
+  // The entitlement goes in the account's server-side details. The details
+  // the account holder can change are not used for this: a user could write
+  // their own Pro flag there and unlock everything for free.
+  const metadata = { ...(user.app_metadata || {}) };
   if (revoke) {
     delete metadata.qrstudio_pro;
     delete metadata.qrstudio_pro_expires;
@@ -117,7 +120,7 @@ async function main() {
   const response = await fetch(`${url}/auth/v1/admin/users/${user.id}`, {
     method: 'PUT',
     headers,
-    body: JSON.stringify({ user_metadata: metadata })
+    body: JSON.stringify({ app_metadata: metadata })
   });
 
   if (!response.ok) {

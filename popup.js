@@ -2558,13 +2558,29 @@ function bindEvents() {
   window.addEventListener('unload', stopCamera);
 }
 
-setInterval(() => {
-  state.accountUpdaters.forEach((update) => update());
-  if (state.resultUpdater) state.resultUpdater();
-  // A licence or a Pro account can run out while the page is open, so the
-  // panel follows the clock rather than the page.
-  if (isPro() !== state.proActive) renderProState();
-}, 1000);
+// The vault clock only needs to tick while the page is on screen. Left open
+// as a tab, a timer that runs every second is a battery drain for nothing.
+let vaultClock = null;
+function startVaultClock() {
+  if (vaultClock) return;
+  vaultClock = setInterval(() => {
+    state.accountUpdaters.forEach((update) => update());
+    if (state.resultUpdater) state.resultUpdater();
+    // A licence or a Pro account can run out while the page is open, so the
+    // panel follows the clock rather than the page.
+    if (isPro() !== state.proActive) renderProState();
+  }, 1000);
+}
+function stopVaultClock() {
+  if (!vaultClock) return;
+  clearInterval(vaultClock);
+  vaultClock = null;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopVaultClock();
+  else startVaultClock();
+});
+startVaultClock();
 bindEvents();
 setSource('tab');
 renderCreatorFields();

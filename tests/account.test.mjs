@@ -72,6 +72,48 @@ test('an account that cannot be read is kept, not deleted', async () => {
   assert.equal(stored.authenticatorAccountsUnreadable[0].id, 'a-bad-one', 'and it is the right one');
 });
 
+test('Pro comes from the details the account holder cannot change', async () => {
+  const context = loadExtension();
+
+  // The server-side details: this is what grants Pro.
+  await context.QRStudioAccount.write({
+    user: {
+      email: 'buyer@example.com',
+      id: 'u1',
+      app_metadata: { qrstudio_pro: true },
+      user_metadata: {}
+    }
+  });
+  const granted = await context.QRStudioAccount.read();
+  assert.equal(granted.pro, true, 'an account marked by the server is Pro');
+
+  // The details the account holder can change for themselves. A user must
+  // not be able to grant themselves Pro this way.
+  await context.QRStudioAccount.write({
+    user: {
+      email: 'cheeky@example.com',
+      id: 'u2',
+      app_metadata: {},
+      user_metadata: { qrstudio_pro: true }
+    }
+  });
+  const selfGranted = await context.QRStudioAccount.read();
+  assert.equal(selfGranted.pro, false, 'an account that wrote its own Pro flag is not Pro');
+});
+
+test('a Pro entitlement that has run out is not Pro', async () => {
+  const context = loadExtension();
+  await context.QRStudioAccount.write({
+    user: {
+      email: 'buyer@example.com',
+      id: 'u1',
+      app_metadata: { qrstudio_pro: true, qrstudio_pro_expires: '2000-01-01T00:00:00.000Z' }
+    }
+  });
+  const stored = await context.QRStudioAccount.read();
+  assert.equal(stored.pro, false, 'an expired entitlement is not Pro');
+});
+
 test('saving the vault does not throw away an account another view added', async () => {
   const context = loadExtension();
   await context.chrome.storage.local.set({ authenticatorAccounts: [savedAccount] });

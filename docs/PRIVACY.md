@@ -153,6 +153,7 @@ clicking a scanned link does.
 | Generated OTP codes | Computed in memory only | Never written to disk | Immediately when the vault reloads or the popup closes |
 | General scan history | `chrome.storage.local` | Only if you enable "Save general QR scans on this device" — **off by default** | When you clear the history, or uninstall the extension |
 | User settings (scan intent, source preference, history toggle) | `chrome.storage.local` | When you change them | When you uninstall the extension |
+| Signed-in email address and session token | `chrome.storage.local` | Only if you sign in | When you sign out, or uninstall the extension |
 | Encrypted vault backups | A file you choose on your disk | Only when you click **Backup** | Only by you — the extension never writes backup files on its own |
 
 **Authenticator setup secrets are never written to scan history.** A QR code
