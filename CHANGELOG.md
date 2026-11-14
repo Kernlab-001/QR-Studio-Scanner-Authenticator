@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-11-14
+
+### Fixed
+
+- **An account can no longer grant itself Pro.** The Pro entitlement was kept in the details a person can change on their own account, so anyone signed in could set it for themselves and unlock the paid features for free. It is now kept in the details only the account server can change.
+- **Signing up no longer says whether an address is registered.**
+- **You can reset a forgotten password.** The account page has a "Forgot your password?" link, and a way to choose a new one when the reset link lands.
+- The published pages now send a content security policy.
+- The vault clock stops when the page is hidden, so leaving the extension open as a tab no longer costs battery.
+- The privacy policy now lists the signed-in address and session token among what is kept on the device, which the README already did.
+
+### Changed
+
+- The Pro entitlement lives in the account's server-side details now. `tools/grant-pro.mjs` writes it there. An account that was marked the old way has to be marked again.
+
 ## [2.4.9] — 2026-11-06
 
 ### Fixed

@@ -44,3 +44,7 @@ scratch/
 # The untouched master artwork stays on the maintainer's machine; the
 # processed icons live in icons/ and assets/logo.png.
 assets/logo-source.png
+
+# The pre-launch audit report lists the app's weaknesses, so it is never
+# committed and never published.
+/AUDIT.md

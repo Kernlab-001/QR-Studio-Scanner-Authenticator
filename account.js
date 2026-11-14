@@ -25,6 +25,17 @@
   const accountEmail = document.getElementById('accountSignedInEmail');
   const accountState = document.getElementById('accountState');
   const signOutButton = document.getElementById('accountSignOut');
+  const forgotPasswordButton = document.getElementById('forgotPassword');
+  const resetPanel = document.getElementById('resetPanel');
+  const resetForm = document.getElementById('resetForm');
+  const resetPassword = document.getElementById('resetPassword');
+  const resetMessage = document.getElementById('resetMessage');
+  const resetBack = document.getElementById('resetBack');
+
+  // A reset link lands here with the session in the address. It is noticed
+  // before the account client is made, because the client consumes the
+  // address as soon as it starts.
+  const cameFromReset = /type=recovery/i.test(window.location.hash) || /type=recovery/i.test(window.location.search);
 
   let mode = 'signin';
   let client = null;
@@ -122,6 +133,66 @@
     signedOut.hidden = false;
     signedIn.hidden = true;
     notConfigured.hidden = true;
+    resetPanel.hidden = true;
+  }
+
+  // The panel for choosing a new password, shown when a reset link lands
+  // here.
+  function showResetPanel() {
+    signedOut.hidden = true;
+    signedIn.hidden = true;
+    notConfigured.hidden = true;
+    resetPanel.hidden = false;
+    resetPassword.focus();
+  }
+
+  // Asks the account server for a reset link. The answer is the same either
+  // way, so it does not say whether the address is registered.
+  async function sendResetLink() {
+    if (!client) {
+      say('The account server is not configured yet.', 'error');
+      return;
+    }
+    const email = emailInput.value.trim();
+    if (!email) {
+      say('Type the address you signed up with first.', 'error');
+      return;
+    }
+    forgotPasswordButton.disabled = true;
+    try {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.href.split('#')[0]
+      });
+      if (error) throw error;
+      say('If that address has an account, a reset link is on its way.');
+    } catch (error) {
+      say(explain(error), 'error');
+    } finally {
+      forgotPasswordButton.disabled = false;
+    }
+  }
+
+  // Saves the new password for the account the reset link was for.
+  async function saveNewPassword(event) {
+    event.preventDefault();
+    if (!client) {
+      resetMessage.textContent = 'The account server is not configured yet.';
+      return;
+    }
+    const password = resetPassword.value;
+    if (password.length < 8) {
+      resetMessage.textContent = 'Use a password of at least 8 characters.';
+      return;
+    }
+    const { error } = await client.auth.updateUser({ password });
+    if (error) {
+      resetMessage.textContent = explain(error);
+      return;
+    }
+    resetMessage.textContent = 'Your new password is saved. You are signed in.';
+    resetPassword.value = '';
+    const account = await store.read();
+    if (account) showSignedIn(account);
   }
 
   async function persist(session) {
@@ -210,7 +281,7 @@
     const text = String(error?.message || error || '');
     if (text.includes('Invalid login credentials')) return 'That email and password do not match.';
     if (text.includes('Email not confirmed')) return 'This account still needs its email address confirmed.';
-    if (text.includes('User already registered')) return 'That address already has an account - try signing in.';
+    if (text.includes('User already registered')) return 'That address cannot be used. Try signing in with it, or use Google instead.';
     if (text.includes('rate limit') || text.includes('over_email_send_rate_limit')) {
       return 'Confirmation emails cannot be sent right now. Sign in with Google instead.';
     }
@@ -349,6 +420,12 @@
     // A sign-in that came back from Google lands here with the session in the
     // address, so it is picked up and stored.
     const session = await adoptSession();
+    if (cameFromReset) {
+      // A reset link landed here. It shows the panel for choosing a new
+      // password rather than closing the tab.
+      showResetPanel();
+      return;
+    }
     if (session) {
       // Only a session that actually arrived in this tab closes it. A page
       // that was opened to look at an already signed-in account stays open.
@@ -373,6 +450,12 @@
   switchButton.addEventListener('click', () => setMode(mode === 'signup' ? 'signin' : 'signup'));
   signOutButton.addEventListener('click', signOut);
   googleButton.addEventListener('click', signInWithGoogle);
+  forgotPasswordButton.addEventListener('click', sendResetLink);
+  resetForm.addEventListener('submit', saveNewPassword);
+  resetBack.addEventListener('click', () => {
+    resetMessage.textContent = '';
+    showSignedOut();
+  });
   // If the sign-in happened in another tab, pick it up when this one comes
   // back to the front.
   window.addEventListener('focus', async () => {

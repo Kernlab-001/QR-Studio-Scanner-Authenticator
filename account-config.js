@@ -49,6 +49,12 @@ window.QRStudioAccountConfig.configured = Boolean(
 // Whether an account is a Pro account is part of the signed-in session: the
 // account server puts it in the session's own details, so finding out costs
 // no extra request.
+//
+// It is read from the server-side details (app_metadata) and never from the
+// details the account holder can change themselves (user_metadata). The
+// session token carries both, and a user can write to their own details, so
+// reading the entitlement from the wrong one would let anyone grant
+// themselves Pro.
 function proEntitlement(metadata) {
   if (!metadata?.qrstudio_pro) return { pro: false, expiresAt: 0 };
   const raw = metadata.qrstudio_pro_expires || 0;
@@ -80,7 +86,9 @@ window.QRStudioAccount = {
   },
 
   async write(session) {
-    const metadata = session?.user?.user_metadata || session?.user_metadata || {};
+    // The entitlement is read from the server-side details only. The details
+    // the account holder can change are never trusted for this.
+    const metadata = session?.user?.app_metadata || session?.app_metadata || {};
     const entitlement = proEntitlement(metadata);
     const account = {
       email: session?.user?.email || session?.email || '',

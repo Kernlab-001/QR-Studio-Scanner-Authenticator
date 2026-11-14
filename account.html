@@ -29,9 +29,21 @@
           <label>Password <input id="accountPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters" required></label>
           <button class="primary-button full" id="accountSubmit" type="submit">Sign in</button>
         </form>
+        <button class="text-button account-switch" id="forgotPassword" type="button">Forgot your password?</button>
         <button class="text-button account-switch" id="accountSwitch" type="button">No account yet? Create one</button>
         <p class="account-message" id="accountMessage" role="status"></p>
         <p class="account-note">The password is handled by Supabase and never reaches QR Studio. QR Studio keeps only your address and a session token, on this device.</p>
+      </section>
+
+      <section class="account-panel" id="resetPanel" hidden>
+        <h2>Choose a new password</h2>
+        <p class="account-intro">Pick a new password for your account. It needs to be at least 8 characters.</p>
+        <form class="account-form" id="resetForm">
+          <label>New password <input id="resetPassword" type="password" autocomplete="new-password" placeholder="At least 8 characters" required></label>
+          <button class="primary-button full" id="resetSubmit" type="submit">Save new password</button>
+        </form>
+        <p class="account-message" id="resetMessage" role="status"></p>
+        <button class="text-button account-switch" id="resetBack" type="button">Back to sign in</button>
       </section>
 
       <section class="account-panel" id="signedIn" hidden>
